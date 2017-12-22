@@ -1,5 +1,5 @@
 '''
-Init builder module
+Init HtmlBuilder class
 '''
 
-from byzantine_server.builders.html_builder import HtmlBuilder
+from html_builder import HtmlBuilder

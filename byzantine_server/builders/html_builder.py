@@ -6,9 +6,9 @@ import os
 
 #Global vars
 #Save path to resources directory
-PATH_DIR = os.path.dirname(os.path.realpath(__file__)) + '/resources'
+PATH_RESOURCES = os.path.dirname(os.path.realpath(__file__)) + '/resources/'
 
-class HtmlBuilder(object):
+class HtmlBuilder():
     '''
     This class handles the building of HTML
     '''
@@ -16,14 +16,14 @@ class HtmlBuilder(object):
         '''
         Init the HTML builder
         '''
-        self.index = open(PATH_DIR + 'index.html', 'r').read()
-        self.vote_result = open(PATH_DIR + 'vote_result.html', 'r').read()
+        self.index = open(PATH_RESOURCES + 'index.html', 'r').read()
+        self.vote_result = open(PATH_RESOURCES + 'vote_result.html', 'r').read()
 
     def build_page(self):
         ''' 
         Assemble page HTML
         '''
-        pass
+        return self.index
         
     
     def build_vote_result(self, results):

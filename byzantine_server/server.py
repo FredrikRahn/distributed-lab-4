@@ -4,12 +4,14 @@ This module will contain all everything related to the server
 
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from httplib import HTTPConnection
-from urllib import urlencode  
+from urllib import urlencode
 from urlparse import parse_qs
+
+from request_path import extract_ep
+from builders.html_builder import HtmlBuilder
 
 # Static variables definitions
 PORT_NUMBER = 80
-
 
 class ByzantineServer(HTTPServer):
     '''
@@ -35,12 +37,17 @@ class ByzantineServer(HTTPServer):
         self.vessel_id = vessel_id
         # The list of other vessels
         self.vessels = vessel_list
-        # Event queue
-        self.event_log = {}
-        # Time
-        self.start_time = 0
+        # Init profile var
+        self.profile = None
+        # Init votes vector
+        self.votes = []
+        # Init results object
+        self.results = {
+            'vessel_id': 'temp_result',
+            'result': None
+        }
 
-    def contact_vessel(self, vessel_ip, path, action, seq_id, sender_id, key, value):
+    def contact_vessel(self, vessel_ip, path, payload):
         '''
         Handles contact with specific vessel
         @args:	Vessel_ip:String, 	IP to the vessel
@@ -53,8 +60,7 @@ class ByzantineServer(HTTPServer):
         # the Boolean variable we will return
         success = False
         # The variables must be encoded in the URL format, through urllib.urlencode
-        post_content = urlencode(
-            {'action': action, 'seq_id': seq_id, 'sender_id': sender_id, 'key': key, 'value': value})
+        post_content = urlencode({'payload': payload})
         # the HTTP header must contain the type of data we are transmitting, here URL encoded
         headers = {"Content-type": "application/x-www-form-urlencoded"}
         # We should try to catch errors when contacting the vessel
@@ -78,11 +84,11 @@ class ByzantineServer(HTTPServer):
         except Exception as e:
             print "Error while contacting %s" % vessel_ip
             # printing the error given by Python
-            print(e)
+            print e
         return success
 
 
-    def propagate_value_to_vessels(self, path, action, seq_id, sender_id, key, value):
+    def propagate_value_to_vessels(self, path, payload):
         '''
         Handles propagation of requests to vessels
         @args:	Path:String,	The path where the request will be sent
@@ -97,15 +103,13 @@ class ByzantineServer(HTTPServer):
             if vessel != ("10.1.0.%s" % self.vessel_id):
                 # A good practice would be to try again if the request failed
                 # Here, we do it only once
-                self.contact_vessel(vessel, path, action,
-                                    seq_id, sender_id, key, value)
+                self.contact_vessel(vessel, path, payload)
 
 
 class RequestHandler(BaseHTTPRequestHandler):
     '''
     This class will handle all incoming requests
     '''
-    
     def set_http_headers(self, status_code=200):
         '''
         Sets HTTP headers and status code of the response
@@ -132,12 +136,16 @@ class RequestHandler(BaseHTTPRequestHandler):
         # we return the data
         return post_data
 
-    def get_request(self):
+    def do_GET(self):
         '''
         Handles incoming GET requests and routes them accordingly
         '''
-        print("Receiving a GET on path %s" % self.path)
-        path = self.path[1::].split('/')
+        print "Receiving a GET on path %s" % self.path
+        path = extract_ep(self.path)
+        if path[0] == '':
+            self.get_index()
+        elif path[0] == 'vote' and path[1] == 'result':
+            self.get_result()
 
     def get_index(self):
         '''
@@ -147,50 +155,45 @@ class RequestHandler(BaseHTTPRequestHandler):
         # We set the response status code to 200 (OK)
         self.set_http_headers(200)
 
-        #fetch_index_header = board_frontpage_header_template
-        #fetch_index_contents = self.board_helper()
-        #fetch_index_footer = board_frontpage_footer_template
+        # Instantiate builder class
+        builder = HtmlBuilder()
 
-        self.wfile.write('Placeholder')
+        # Fetch page content and write to output stream
+        page_content = builder.build_page()
+        self.wfile.write(page_content)
 
+    def get_result(self):
+        # We set the response status code to 200 (OK)
+        self.set_http_headers(200)
 
-    # def board_helper(self):
-    #     '''
-    #     Helper func for fetching board contents
-    #     @return: List of boardcontents
-    #     '''
-    #     fetch_index_entries = ""
-    #     for entryId, entryValue in self.server.store.items():
-    #         fetch_index_entries += entry_template % ("entries/" + str(
-    #             entryId), int(entryId), str(entryValue[0]), str(entryValue[2]))
-    #     boardcontents = boardcontents_template % ("Title", fetch_index_entries)
-    #     return boardcontents
+        # Instantiate builder class
+        builder = HtmlBuilder()
+        
+        # Fetch voting results and write to output stream
+        voting_results = builder.build_vote_result(self.server.votes)
+        self.wfile.write(voting_results)
 
-
-    # def request_board(self):
-    #     '''
-    #     Fetches the board and its contents
-    #     '''
-    #     self.set_http_headers(200)
-    #     html_response = self.board_helper()
-    #     self.wfile.write(html_response)
-
-
-    # def request_entry(self, entryID):
-    #     '''
-    #     Retrieve an entry from store and inserts it into the entry_template
-    #     @args: entryID:String, ID of entry to be retrieved
-    #     @return: Entry:html
-    #     '''
-    #     # Find the specific value for the entry, if entry does not exist set value to None
-    #     entryValue = self.server.store[entryId] if entryId in self.server.store else None
-    #     # Return found entry if it exists, or return empty string if no such entry was found
-    #     return entry_template % ("entries/" + entryId, entryId, entryValue) if entryValue != None else ""
-
-    def post_request(self):
+    def do_POST(self):
         '''
         Handles incoming POST requests and routes them accordingly
         '''
-        
-        print("Receiving a POST on %s" % self.path)
-        path = self.path[1::].split('/')
+        print "Receiving a POST on %s" % self.path
+
+        path = extract_ep(self.path)
+        if path[0] == 'vote':
+            if path[1] == 'attack':
+                self.vote_attack()
+            elif path[1] == 'retreat':
+                self.vote_retreat()
+            elif path[1] == 'byzantine':
+                self.vote_byzantine()
+    
+    def vote_attack(self):
+        pass
+
+    def vote_retreat(self):
+        pass
+
+    def vote_byzantine(self):
+        pass
+

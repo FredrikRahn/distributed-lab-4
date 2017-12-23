@@ -1,17 +1,20 @@
 '''
 This module will contain all everything related to the server
 '''
-
-from helper import extract_ep
-from builders.html_builder import HtmlBuilder
-
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from httplib import HTTPConnection
 from urllib import urlencode
 from urlparse import parse_qs
+from threading import Thread
+
+import models
+from helper import extract_ep
+from builders.html_builder import HtmlBuilder
+from generals import Byzantine, Honest, General
 
 # Static variables definitions
 PORT_NUMBER = 80
+
 
 class ByzantineServer(HTTPServer):
     '''
@@ -29,23 +32,33 @@ class ByzantineServer(HTTPServer):
         '''
         # We call the super init
         HTTPServer.__init__(self, server_address, handler)
-        # we create the dictionary of values
-        self.store = {}
-        # We keep a variable of the next id to insert
-        self.current_key = -1
         # our own ID (IP is 10.1.0.ID)
         self.vessel_id = vessel_id
         # The list of other vessels
         self.vessels = vessel_list
+        # Init round to 1
+        self.round = 1
+        # Set on_tie value (Attack)
+        self.on_tie = True
+        # Instantiate general class, all nodes are generals
+        self.general = General()
         # Init profile var
-        self.profile = None
-        # Init votes vector
-        self.votes = []
-        # Init results object
-        self.results = {
-            'vessel_id': 'temp_result',
-            'result': None
-        }
+        self.profile = self.decide_profile(len(vessel_list))
+
+    def decide_profile(self, numberOfNodes):
+        """
+        Decides on a profile by calling the choose_role function on the general class
+        Return the class chosen
+            :param numberOfNodes: Number of nodes in the network
+        """
+        if numberOfNodes > 0:
+            role = self.general.choose_role(numberOfNodes)
+            if role == 'Byzantine':
+                return Byzantine()
+            else:
+                return Honest()
+        else:
+            raise ValueError, 'No nodes in the network'
 
     def contact_vessel(self, vessel_ip, path, payload):
         '''
@@ -87,8 +100,7 @@ class ByzantineServer(HTTPServer):
             print e
         return success
 
-
-    def propagate_value_to_vessels(self, path, payload):
+    def propagate_payload_to_vessels(self, path, payload):
         '''
         Handles propagation of requests to vessels
         @args:	Path:String,	The path where the request will be sent
@@ -97,7 +109,7 @@ class ByzantineServer(HTTPServer):
                         Value:String, 	Value corresponding to key
         @return:
         '''
-        #TODO: Add retry if fail
+        # TODO: Add retry if fail
 
         for vessel in self.vessels:
             if vessel != ("10.1.0.%s" % self.vessel_id):
@@ -110,6 +122,7 @@ class RequestHandler(BaseHTTPRequestHandler):
     '''
     This class will handle all incoming requests
     '''
+
     def set_http_headers(self, status_code=200):
         '''
         Sets HTTP headers and status code of the response
@@ -163,12 +176,16 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(page_content)
 
     def get_result(self):
+        """
+        docstring here
+            :param self: temp
+        """
         # We set the response status code to 200 (OK)
         self.set_http_headers(200)
 
         # Instantiate builder class
         builder = HtmlBuilder()
-        
+
         # Fetch voting results and write to output stream
         voting_results = builder.build_vote_result(self.server.votes)
         self.wfile.write(voting_results)
@@ -187,13 +204,95 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.vote_retreat()
             elif path[1] == 'byzantine':
                 self.vote_byzantine()
-    
+        elif path[0] == 'propagate':
+            self.propagate()
+        else:
+            raise ValueError, 'Unknown request path'
+
     def vote_attack(self):
-        pass
+        """
+        TODO: Implement
+            :param self: temp
+        """
+        # Check so profile is Honest
+        if self.server.profile.myProfile == 'Honest':
+            vote = models.vote_data(self.server.vessel_id, True)
+
+        else:
+            raise TypeError, 'Wrong profile type (not honest)'
 
     def vote_retreat(self):
-        pass
+        """
+        TODO: Implement
+            :param self: temp
+        """
+        # Check so profile is Honest
+        if self.server.profile.myProfile == 'Honest':
+            payload = models.vote_data(self.server.vessel_id, True)
+            self.propagate_payload(payload)
+        else:
+            raise TypeError, 'Wrong profile type (not honest)'
 
     def vote_byzantine(self):
-        pass
+        """
+        TODO: Implement
+            :param self: temp
+        """
+        # Save vars for readability
+        no_round = self.server.no_round
+        no_nodes = len(self.server.vessels)
+        no_loyal = no_nodes - General.nrByzantineAllowed
+        on_tie = self.server.on_tie
 
+        # Setup model
+        model = models.byzantine_vote(no_round, no_nodes, no_loyal, on_tie)
+
+        # Check so profile is byzantine
+        if self.server.profile.myProfile == 'Byzantine':
+            byzantine_payload = self.server.profile.vote(model)
+            self.server.propagate_byzantine(byzantine_payload)
+        else:
+            raise TypeError, 'Wrong profile type (not byzantine)'
+
+    def propagate(self):
+        pass
+    
+    def propagate_byzantine(self, byzantine_payload, path=''):
+        '''
+        TODO: Temp pydoc
+        '''
+        if not path:
+            path = '/propagate'
+
+        for i in range(1, len(self.server.vessels)):
+            if i != self.server.vessel_id:
+                # Send to everyone but itself
+                vessel_ip = "10.1.0.%d" % i
+
+                # Assemble payload
+                payload = models.vote_data(self.server.vessel_id, byzantine_payload[i-1]) 
+
+                # Spawn thread for contact_vessel
+                thread = Thread(target=self.server.contact_vessel,
+                                args=(vessel_ip, path, payload))
+
+                # Kill the process if we kill the server
+                thread.daemon = True
+                # Start the thread
+                thread.start()
+
+    def propagate_payload(self, payload, path=''):
+        '''
+        TODO: Temp pydoc
+        '''
+        if not path:
+            path = '/propagate'
+
+        # Spawn thread for propagate_value_to_vessels
+        thread = Thread(target=self.server.propagate_payload_to_vessels,
+                        args=(path, payload))
+
+        # Kill the process if we kill the server
+        thread.daemon = True
+        # Start the thread
+        thread.start()

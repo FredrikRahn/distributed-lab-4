@@ -14,7 +14,7 @@ def vote_data(node_id, vote):
 
     return model
 
-def byzantine_vote(no_round, no_nodes, no_loyal, on_tie):
+def byzantine_vote_input(no_round, no_nodes, no_loyal, on_tie):
     '''
     Byzantine vote model
     '''

@@ -13,7 +13,8 @@ class Byzantine(General):
     def __init__(self):
         # Run init on extended General class
         super(Byzantine, self).__init__()
-        self.myProfile = 'Byzantine'
+        self.my_profile = 'Byzantine'
+        self.my_vote = None
 
     def vote(self, voting_data):
         """
@@ -23,11 +24,19 @@ class Byzantine(General):
             :param no_total: total number of nodes
             :param on_tie: action on tie
         """
+        print voting_data
 
-        if voting_data.no_round == 1:
-            self.vote_round1(voting_data.no_loyal, voting_data.on_tie)
-        elif voting_data.no_round == 2:
-            self.vote_round2(voting_data.no_loyal, voting_data.no_total, voting_data.on_tie)
+        no_round = voting_data['no_round']
+        no_nodes = voting_data['no_nodes']
+        no_loyal = voting_data['no_loyal']
+        on_tie = voting_data['on_tie']
+
+
+
+        if voting_data['no_round'] == 1:
+            self.my_vote = self.vote_round1(voting_data['no_loyal'], voting_data['on_tie'])
+        elif voting_data['no_round'] == 2:
+            self.my_vote = self.vote_round2(voting_data['no_loyal'], voting_data['no_nodes'], voting_data['on_tie'])
         else:
             raise ValueError, 'Invalid round count'
 

@@ -37,7 +37,7 @@ class ByzantineServer(HTTPServer):
         # The list of other vessels
         self.vessels = vessel_list
         # Init round to 1
-        self.round = 1
+        self.no_round = 1
         # Set on_tie value (Attack)
         self.on_tie = True
         # Instantiate general class, all nodes are generals
@@ -116,6 +116,13 @@ class ByzantineServer(HTTPServer):
                 # A good practice would be to try again if the request failed
                 # Here, we do it only once
                 self.contact_vessel(vessel, path, payload)
+    
+    def byzantine_agreement(self):
+        '''
+        init byzantine agreement algorithm
+        '''
+        # dont really know what to put here right now
+        pass
 
 
 class RequestHandler(BaseHTTPRequestHandler):
@@ -172,7 +179,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         builder = HtmlBuilder()
 
         # Fetch page content and write to output stream
-        page_content = builder.build_page()
+        page_content = builder.build_page(self.server.profile.my_profile)
         self.wfile.write(page_content)
 
     def get_result(self):
@@ -187,7 +194,11 @@ class RequestHandler(BaseHTTPRequestHandler):
         builder = HtmlBuilder()
 
         # Fetch voting results and write to output stream
-        voting_results = builder.build_vote_result(self.server.votes)
+        # Right now it temporarily shows only the votes the nodes themselves voted
+        # TODO: Implement get_result to return voting vector of recieved votes
+        # for all nodes
+        # use build_vote_result in builders to assemble node arrays
+        voting_results = self.server.profile.my_vote
         self.wfile.write(voting_results)
 
     def do_POST(self):
@@ -195,7 +206,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         Handles incoming POST requests and routes them accordingly
         '''
         print "Receiving a POST on %s" % self.path
-
         path = extract_ep(self.path)
         if path[0] == 'vote':
             if path[1] == 'attack':
@@ -215,10 +225,18 @@ class RequestHandler(BaseHTTPRequestHandler):
             :param self: temp
         """
         # Check so profile is Honest
-        if self.server.profile.myProfile == 'Honest':
-            vote = models.vote_data(self.server.vessel_id, True)
+        if self.server.profile.my_profile == 'Honest':
+            # Set http header to OK
+            self.set_http_headers(200)
+            # Assemble payload
+            vessel_id = self.server.vessel_id
+            profile = self.server.profile
+            payload = models.vote_data(vessel_id, profile.vote_attack)
+            self.propagate_payload(payload)
 
         else:
+            # Set http header to Bad request
+            self.set_http_headers(400)
             raise TypeError, 'Wrong profile type (not honest)'
 
     def vote_retreat(self):
@@ -227,10 +245,17 @@ class RequestHandler(BaseHTTPRequestHandler):
             :param self: temp
         """
         # Check so profile is Honest
-        if self.server.profile.myProfile == 'Honest':
-            payload = models.vote_data(self.server.vessel_id, True)
+        if self.server.profile.my_profile == 'Honest':
+            # Set http header to OK
+            self.set_http_headers(200)
+            # Assemble payload
+            vessel_id = self.server.vessel_id
+            profile = self.server.profile
+            payload = models.vote_data(vessel_id, profile.vote_retreat)
             self.propagate_payload(payload)
         else:
+            # Set http header to Bad request
+            self.set_http_headers(400)
             raise TypeError, 'Wrong profile type (not honest)'
 
     def vote_byzantine(self):
@@ -245,17 +270,26 @@ class RequestHandler(BaseHTTPRequestHandler):
         on_tie = self.server.on_tie
 
         # Setup model
-        model = models.byzantine_vote(no_round, no_nodes, no_loyal, on_tie)
+        model = models.byzantine_vote_input(no_round, no_nodes, no_loyal, on_tie)
 
         # Check so profile is byzantine
-        if self.server.profile.myProfile == 'Byzantine':
+        if self.server.profile.my_profile == 'Byzantine':
+            # Set http header to OK
+            self.set_http_headers(200)
             byzantine_payload = self.server.profile.vote(model)
             self.server.propagate_byzantine(byzantine_payload)
         else:
+            # Set http header to Bad request
+            self.set_http_headers(400)
             raise TypeError, 'Wrong profile type (not byzantine)'
 
     def propagate(self):
-        pass
+        '''
+        Handle requests on the /propagate endpoint
+        '''
+        payload = self.parse_post_request()
+        print payload
+        
     
     def propagate_byzantine(self, byzantine_payload, path=''):
         '''

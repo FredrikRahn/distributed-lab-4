@@ -15,7 +15,14 @@ class Honest(General):
     def __init__(self):
         # Run init on extended General class
         super(Honest, self).__init__()
-        self.myProfile = 'Honest'
+        # Init my_profile var to easily check class of node
+        self.my_profile = 'Honest'
+        # Init my_vote for readability
+        self.my_vote = None
+        # Init empty vote vector
+        self.vote_vector = None
+        # Init empty Result vector
+        self.result_vector = None
 
     def vote_attack(self):
         """
@@ -23,7 +30,8 @@ class Honest(General):
             :param self: temp
         """
         print 'Voted Attack'
-        return True
+        self.my_vote = True
+        return self.my_vote
 
     def vote_retreat(self):
         """
@@ -31,19 +39,5 @@ class Honest(General):
             :param self: temp
         """
         print 'Voted Retreat'
-        return False
-
-    def vote(self):
-        """
-        TODO: Implement
-            :param self: temp
-        """
-
-        # TODO: Add logic on how to decide votes
-        # For now just do dice roll with 50/50 chance
-
-        roll = randint(1, 100)
-        if roll <= 50:
-            return 'Attack'
-        else:
-            return 'Retreat'
+        self.my_vote = False
+        return self.my_vote

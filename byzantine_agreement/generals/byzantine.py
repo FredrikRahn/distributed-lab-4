@@ -13,8 +13,14 @@ class Byzantine(General):
     def __init__(self):
         # Run init on extended General class
         super(Byzantine, self).__init__()
+        # Init profile var to byzantine
         self.my_profile = 'Byzantine'
+        # Init vote to none
         self.my_vote = None
+        # Init empty vote vector
+        self.vote_vector = None
+        # Init empty Result vector
+        self.result_vector = None
 
     def vote(self, voting_data):
         """

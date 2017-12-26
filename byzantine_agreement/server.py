@@ -294,7 +294,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         print 'payload: ', payload
         
         # Save recieved votes in voting vector
-        self.server.profile.vote_vector
+        self.server.profile.vote_vector['%s' % payload['node_id']]
     
     def propagate_byzantine(self, byzantine_payload, path=''):
         '''

@@ -1,7 +1,7 @@
 import sys
+import webbrowser
 from lab4 import Lab4
 from __init__ import PATH_RESOURCES
-import webbrowser
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:

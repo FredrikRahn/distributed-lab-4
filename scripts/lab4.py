@@ -2,7 +2,7 @@
 #------------------------------------------------------------------------------------------------------
 # TDA596 - Lab 1
 # This script creates the distributed system, runs the simulation and launches the servers app
-# Contains two classes: Lab4Topology and Lab4
+# Contains two classes: Lab1Topology and Lab1
 # This script does not need any modification
 # Author: Valentin Poirot <poirotv@chalmers.se>
 #------------------------------------------------------------------------------------------------------
@@ -13,12 +13,17 @@ from mininet.link import TCLink, TCIntf, Intf  # Customisable links & interfaces
 from mininet.log import setLogLevel, info  # Logger
 from mininet.term import makeTerm, cleanUpScreens  # Open xterm from mininet
 from mininet.cli import CLI  # Command Line Interface
+#------------------------------------------------------------------------------------------------------
+
 
 #------------------------------------------------------------------------------------------------------
-# Lab4Topology - class inheriting from mininet.topo.Topo, defines the network topology
-class Lab4Topology(Topo):
-    #------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------
+# Lab1Topology - class inheriting from mininet.topo.Topo, defines the network topology
+class Lab1Topology(Topo):
+    "Creates the network topology on which the lab 1 runs"
+#------------------------------------------------------------------------------------------------------
     # Initialize variables
+
     def build(self, nbOfServersPerRegion=5, nbOfClientsPerRegion=2, nbOfRegions=2, **opts):
         # local configuration parameters
         regionalLinkBandwidth = 100  # Mbps
@@ -38,7 +43,7 @@ class Lab4Topology(Topo):
         # For each region
         for regionId in range(0, nbOfRegions):
             # we create a regional switch
-            switches.append(self.addSwitch("regSwitch%d" % regionId))
+            switches.append(self.addSwitch("r%d" % regionId))
             # we add servers/vessels in that region, with a fixed IP
             for serverId in range(0, nbOfServersPerRegion):
                 # serverId is a regional Id, we want a global one
@@ -67,13 +72,13 @@ class Lab4Topology(Topo):
 
 #------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------
-# Lab4 - class running the Mininet environment and launching the servers
-class Lab4():
+# Lab1 - class running the Mininet environment and launching the servers
+class Lab1():
     #------------------------------------------------------------------------------------------------------
     # Open an xterm and launch a specific command
     def startServer(self, server, nbOfServers):
         # Call mininet.term.makeTerm
-        makeTerm(node=server, cmd="python server/server.py %s %d" %
+        makeTerm(node=server, cmd="python blackboard_server %s %d" %
                  (server.IP().replace("10.1.0.", ""), nbOfServers))
 #------------------------------------------------------------------------------------------------------
     # run(self)
@@ -82,12 +87,12 @@ class Lab4():
     def run(self):
         "Run the lab 1 simulation environment"
         # local variables
-        nbOfServersPerRegion = 2
+        nbOfServersPerRegion = 5
         nbOfClientsPerRegion = 2
         nbOfRegions = 2
         localJitter = 10  # ms, the evolution of the time between two consecutive packets
         # We create the topology
-        topology = Lab4Topology(nbOfServersPerRegion,
+        topology = Lab1Topology(nbOfServersPerRegion,
                                 nbOfClientsPerRegion, nbOfRegions)
         # We create the simulation
         # Set the topology, the class for links and interfaces, the mininet environment must be cleaned up before launching, we should build now the topology
@@ -116,16 +121,3 @@ class Lab4():
         simulation.stop()
         # We close the xterms (mininet.term.cleanUpScreens)
         cleanUpScreens()
-#------------------------------------------------------------------------------------------------------
-
-
-
-#------------------------------------------------------------------------------------------------------
-#------------------------------------------------------------------------------------------------------
-# If the script was directly launched (and that should be the case!)
-if __name__ == '__main__':
-    # we set the log level to info, in order to display the server outputs as well
-    #setLogLevel( 'info' )
-    lab = Lab4()
-    lab.run()
-#------------------------------------------------------------------------------------------------------

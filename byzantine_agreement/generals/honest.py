@@ -20,7 +20,7 @@ class Honest(General):
         # Init my_vote for readability
         self.my_vote = None
         # Init empty vote vector
-        self.vote_vector = None
+        self.vote_vector = {}
         # Init empty Result vector
         self.result_vector = None
 

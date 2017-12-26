@@ -45,6 +45,7 @@ class ByzantineServer(HTTPServer):
         # Init profile var
         self.profile = self.decide_profile(len(vessel_list))
 
+
     def decide_profile(self, numberOfNodes):
         """
         Decides on a profile by calling the choose_role function on the general class
@@ -121,8 +122,10 @@ class ByzantineServer(HTTPServer):
         '''
         init byzantine agreement algorithm
         '''
-        # dont really know what to put here right now
-        pass
+        # Init vote_vectors
+        for i in range(1, len(self.vessels)):
+            self.profile.vote_vector['node_%d' % i] = None
+        
 
 
 class RequestHandler(BaseHTTPRequestHandler):
@@ -191,7 +194,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.set_http_headers(200)
 
         # Instantiate builder class
-        builder = HtmlBuilder()
+        #builder = HtmlBuilder()
 
         # Fetch voting results and write to output stream
         # Right now it temporarily shows only the votes the nodes themselves voted
@@ -277,7 +280,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             # Set http header to OK
             self.set_http_headers(200)
             byzantine_payload = self.server.profile.vote(model)
-            self.server.propagate_byzantine(byzantine_payload)
+            self.propagate_byzantine(byzantine_payload)
         else:
             # Set http header to Bad request
             self.set_http_headers(400)
@@ -288,8 +291,10 @@ class RequestHandler(BaseHTTPRequestHandler):
         Handle requests on the /propagate endpoint
         '''
         payload = self.parse_post_request()
-        print payload
+        print 'payload: ', payload
         
+        # Save recieved votes in voting vector
+        self.server.profile.vote_vector
     
     def propagate_byzantine(self, byzantine_payload, path=''):
         '''

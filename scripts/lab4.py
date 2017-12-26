@@ -73,7 +73,7 @@ class Lab1Topology(Topo):
 #------------------------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------
 # Lab1 - class running the Mininet environment and launching the servers
-class Lab1():
+class Lab4():
     #------------------------------------------------------------------------------------------------------
     # Open an xterm and launch a specific command
     def startServer(self, server, nbOfServers):

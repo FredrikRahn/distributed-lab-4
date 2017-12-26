@@ -1,6 +1,6 @@
 import sys
 import webbrowser
-from lab1 import Lab1
+from lab4 import Lab4
 from __init__ import PATH_RESOURCES
 
 if __name__ == '__main__':
@@ -11,7 +11,7 @@ if __name__ == '__main__':
         print sys.argv
         if script_to_run == 'lab4':
             # Instantiate Lab4 class
-            script = Lab1()
+            script = Lab4()
             if len(sys.argv) == 3:
                 if sys.argv[2] == 'show':
                     # User want to open the webpage as well

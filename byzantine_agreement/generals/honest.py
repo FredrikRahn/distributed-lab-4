@@ -31,7 +31,7 @@ class Honest(General):
         """
         print 'Voted Attack'
         self.my_vote = True
-        return self.my_vote
+        return True
 
     def vote_retreat(self):
         """
@@ -40,4 +40,4 @@ class Honest(General):
         """
         print 'Voted Retreat'
         self.my_vote = False
-        return self.my_vote
+        return False

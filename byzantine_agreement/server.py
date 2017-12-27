@@ -234,8 +234,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.set_http_headers(200)
             # Assemble payload
             vessel_id = self.server.vessel_id
-            profile = self.server.profile
-            payload = models.vote_data(vessel_id, profile.vote_attack)
+            vote = self.server.profile.vote_attack
+            payload = models.vote_data(vessel_id, str(vote))
             self.propagate_payload(payload)
 
         else:
@@ -254,8 +254,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.set_http_headers(200)
             # Assemble payload
             vessel_id = self.server.vessel_id
-            profile = self.server.profile
-            payload = models.vote_data(vessel_id, profile.vote_retreat)
+            vote = self.server.profile.vote_retreat
+            payload = models.vote_data(vessel_id, str(vote))
             self.propagate_payload(payload)
         else:
             # Set http header to Bad request
@@ -274,13 +274,13 @@ class RequestHandler(BaseHTTPRequestHandler):
         on_tie = self.server.on_tie
 
         # Setup model
-        model = models.byzantine_vote_input(no_round, no_nodes, no_loyal, on_tie)
+        data = models.byzantine_vote_input(no_round, no_nodes, no_loyal, on_tie)
 
         # Check so profile is byzantine
         if self.server.profile.my_profile == 'Byzantine':
             # Set http header to OK
             self.set_http_headers(200)
-            byzantine_payload = self.server.profile.vote(model)
+            byzantine_payload = self.server.profile.vote(data)
             self.propagate_byzantine(byzantine_payload)
         else:
             # Set http header to Bad request

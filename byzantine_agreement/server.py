@@ -239,8 +239,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             vessel_id = self.server.vessel_id
             vote = self.server.profile.vote_attack()
             payload = models.vote_data(vessel_id, vote)
-            # Save vote in vote vector
-            self.server.profile.vote_vector[vessel_id] = vote
+            # Propagate the payload
             self.propagate_payload(payload)
 
         else:
@@ -261,8 +260,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             vessel_id = self.server.vessel_id
             vote = self.server.profile.vote_retreat()
             payload = models.vote_data(vessel_id, vote)
-            # Save vote in vote vector
-            self.server.profile.vote_vector[vessel_id] = vote
+            # Propagate the payload
             self.propagate_payload(payload)
         else:
             # Set http header to Bad request
@@ -306,8 +304,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         print 'parsed data: ', parsed_data
         vote = parsed_data['vote']
         node_id = parsed_data['node_id']
-        # Save recieved votes in voting vector
-        self.server.profile.vote_vector[node_id] = vote
+        # Save recieved vote in vote vector
+        self.server.profile.add_to_vote_vector(node_id, vote)
     
     def propagate_byzantine(self, byzantine_payload, path=''):
         '''

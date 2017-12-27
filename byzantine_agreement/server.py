@@ -295,11 +295,11 @@ class RequestHandler(BaseHTTPRequestHandler):
         '''
         Handle requests on the /propagate endpoint
         '''
-        payload = self.parse_post_request()
-        data = payload['payload'][0]
+        post_data = self.parse_post_request()
+        data = post_data['payload'][0]
         print 'payload data: ', data
-        node_id = data['node_id']
-        vote = data['vote']
+        node_id = post_data['payload'][0]['node_id']
+        vote = post_data['payload'][0]['vote']
         print 'vote data: ', vote
         # Save recieved votes in voting vector
         self.server.profile.vote_vector[node_id] = vote

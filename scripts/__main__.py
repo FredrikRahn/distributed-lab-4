@@ -7,17 +7,18 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print 'script_to_run omitted'
     else:
-        script_to_run = sys.argv[1]
-        print sys.argv
-        if script_to_run == 'lab4':
+        SCRIPT_TO_RUN = sys.argv[1]
+        if SCRIPT_TO_RUN == 'lab4':
             # Instantiate Lab4 class
-            script = Lab4()
+            SCRIPT = Lab4()
             if len(sys.argv) == 3:
                 if sys.argv[2] == 'show':
                     # User want to open the webpage as well
                     webbrowser.open(PATH_RESOURCES + 'multiple_instances.html')
-            script.run()
+            SCRIPT.run()
+        elif SCRIPT_TO_RUN == 'show':
+            # User want to only open multiple instances
+            webbrowser.open(PATH_RESOURCES + 'multiple_instances.html')
         else:
             print 'script not found!'
-
 

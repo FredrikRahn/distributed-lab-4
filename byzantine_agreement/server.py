@@ -234,7 +234,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.set_http_headers(200)
             # Assemble payload
             vessel_id = self.server.vessel_id
-            vote = self.server.profile.vote_attack
+            vote = self.server.profile.vote_attack()
             payload = models.vote_data(vessel_id, vote)
             # Save vote in vote vector
             self.server.profile.vote_vector[vessel_id] = vote
@@ -256,7 +256,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.set_http_headers(200)
             # Assemble payload
             vessel_id = self.server.vessel_id
-            vote = self.server.profile.vote_retreat
+            vote = self.server.profile.vote_retreat()
             payload = models.vote_data(vessel_id, vote)
             # Save vote in vote vector
             self.server.profile.vote_vector[vessel_id] = vote
@@ -300,7 +300,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         print 'payload data: ', data
         node_id = data['node_id']
         vote = data['vote']
-        
+        print 'vote data: ', vote
         # Save recieved votes in voting vector
         self.server.profile.vote_vector[node_id] = vote
     

@@ -6,6 +6,7 @@ from httplib import HTTPConnection
 from urllib import urlencode
 from urlparse import parse_qs
 from threading import Thread
+import ast
 
 import models
 from helper import extract_ep
@@ -291,10 +292,13 @@ class RequestHandler(BaseHTTPRequestHandler):
         Handle requests on the /propagate endpoint
         '''
         payload = self.parse_post_request()
-        print 'payload: ', payload
+        data = payload['payload'][0]
+        parsed_data = ast.literal_eval(data)
+        print 'payload data: ', data
+        print 'parsed data: ', parsed_data
         
         # Save recieved votes in voting vector
-        self.server.profile.vote_vector['%s' % payload['node_id']]
+        #self.server.profile.vote_vector['%s' % payload['node_id']]
     
     def propagate_byzantine(self, byzantine_payload, path=''):
         '''

@@ -203,9 +203,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         # for all nodes
         # use build_vote_result in builders to assemble node arrays
         vote_vector = self.server.profile.vote_vector
-        number_of_nodes = len(self.server.vessels)
 
-        votes_page = builder.build_vote_result(vote_vector, number_of_nodes)
+        votes_page = builder.build_vote_result(vote_vector)
 
         self.wfile.write(votes_page)
 

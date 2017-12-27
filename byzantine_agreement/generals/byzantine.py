@@ -18,9 +18,9 @@ class Byzantine(General):
         # Init vote to none
         self.my_vote = None
         # Init empty vote vector
-        self.vote_vector = None
+        self.vote_vector = {}
         # Init empty Result vector
-        self.result_vector = None
+        self.result_vector = {}
 
     def vote(self, voting_data):
         """
@@ -75,3 +75,6 @@ class Byzantine(General):
             else:
                 result_vectors.append([not on_tie] * no_total)
         return result_vectors
+
+    def add_to_vote_vector(self, node_id, vote):
+        self.vote_vector[node_id] = vote

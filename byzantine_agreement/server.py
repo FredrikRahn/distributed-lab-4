@@ -195,15 +195,19 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.set_http_headers(200)
 
         # Instantiate builder class
-        #builder = HtmlBuilder()
+        builder = HtmlBuilder()
 
         # Fetch voting results and write to output stream
         # Right now it temporarily shows only the votes the nodes themselves voted
         # TODO: Implement get_result to return voting vector of recieved votes
         # for all nodes
         # use build_vote_result in builders to assemble node arrays
-        voting_results = self.server.profile.my_vote
-        self.wfile.write(voting_results)
+        vote_vector = self.server.profile.vote_vector
+        number_of_nodes = len(self.server.vessels)
+
+        votes_page = builder.build_vote_result(vote_vector, number_of_nodes)
+
+        self.wfile.write(votes_page)
 
     def do_POST(self):
         '''
@@ -300,7 +304,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         data = post_data['payload'][0]
         print 'payload data: ', data
         parsed_data = ast.literal_eval(data)
-        print 'vote data: ', parsed_data
+        print 'parsed data: ', parsed_data
         vote = parsed_data['vote']
         node_id = parsed_data['node_id']
         # Save recieved votes in voting vector

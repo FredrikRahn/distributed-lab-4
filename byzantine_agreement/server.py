@@ -294,20 +294,20 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Need nested loop to check all the values on same index in all the vectors
         for i in range(0, vector_length):
             for vector in range(0, no_vectors):
-                if self.server.vectors_received[vector][i] == True:
+                if self.server.vectors_received[vector][i]:
                     no_true += 1
-                elif self.server.vectors_received[vector][i] == False:
+                elif not self.server.vectors_received[vector][i]:
                     no_false += 1
                 else:
                     raise ValueError, 'Value is not True or False in vectors_received'
             # Save majority result to result_vector
             if no_true > no_false:
-                self.server.general.result_vector[i] = True
+                self.server.general.result_vector.append(True)
             elif no_false > no_true: 
-                self.server.general.result_vector[i] = False
+                self.server.general.result_vector.append(False)
             else:
                 # No majority, set value to UNKNOWN
-                self.server.general.result_vector[i] = 'UNKNOWN'
+                self.server.general.result_vector.append('UNKNOWN')
 
             # Reset counters for next index to compare
             no_true = 0

@@ -181,6 +181,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Number of results to be received and received
         no_results_received = len(self.server.general.result_vector) - 1
         no_results_to_receive = len(self.server.vessels) - 1
+        print '#received, #to receive', no_results_received, no_results_to_receive
 
         # If we havent received all results, show vote_vector on page
         if no_results_received < no_results_to_receive:
@@ -384,6 +385,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             if no_round == 1:
                 # Wait until all votes has been received from all nodes
                 while len(self.server.general.vote_vector.keys()) != (len(self.server.vessels) - self.server.no_byzantine):
+                    #TODO: Fix so this doesnt block so it can still receive new votes
                     # Print once every 3 seconds to prevent spam
                     time.sleep(3)
                     print 'Waiting for all votes to be received'
@@ -450,7 +452,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Save vote_vector in vectors_received
         self.server.vectors_received.append(vote_vector)
 
-        print 'All vote_vectors received: ', self.server.vectors_received
+        print 'Vote_vectors received: ', self.server.vectors_received
         # Check if we have received all the vote_vectors
         no_vectors_received = len(self.server.vectors_received)
         # Should receive vectors from all but themselves

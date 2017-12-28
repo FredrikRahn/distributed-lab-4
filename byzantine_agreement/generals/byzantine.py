@@ -48,6 +48,7 @@ class Byzantine(General):
                 result_vote.append(not on_tie)
             else:
                 result_vote.append(on_tie)
+        self.my_vote = result_vote
         return result_vote
 
     def vote_round2(self, no_loyal, no_total, on_tie):
@@ -64,5 +65,6 @@ class Byzantine(General):
                 result_vectors.append([on_tie] * no_total)
             else:
                 result_vectors.append([not on_tie] * no_total)
+        self.my_vote = result_vectors
         return result_vectors
 

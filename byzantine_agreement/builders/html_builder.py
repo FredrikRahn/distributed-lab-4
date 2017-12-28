@@ -30,7 +30,7 @@ class HtmlBuilder(object):
         page = self.profile % profile + self.index
         return page
 
-    def build_vote_result(self, vote_vector):
+    def build_votes_result(self, vote_vector):
         '''
         Updates the voting result template
         '''
@@ -38,3 +38,9 @@ class HtmlBuilder(object):
         for key in vote_vector.keys():
             entry += self.vote_result % (str(key) + ' ' + str(vote_vector[key]))
         return entry
+
+    def build_result(self, result_vector, result):
+        result = 'Result vector: '
+        for vote in result_vector:
+            result += self.vote_result % (str(vote) + '\n')
+        result += '\n' + 'Result: ' + str(result)

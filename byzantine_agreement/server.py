@@ -264,6 +264,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         if self.server.profile.my_profile == 'General':
             # Set profile to Honest
             self.server.profile = Honest()
+            print 'Profile set to Honest'
+
         elif self.server.profile.my_profile == 'Byzantine':
             # Profile is set to Byzantine which can only vote through Byzantine button
             raise ValueError, 'Profile set to Byzantine cant vote attack or retreat'
@@ -296,6 +298,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         '''
         if self.server.profile.my_profile == 'General':
             # Set profile to Byzantine
+            print 'Profile set to Byzantine and appended ip to node_ids'
             self.server.profile = Byzantine()
             Byzantine.node_ids.append("10.1.0.%s" % self.server.vessel_id)
 

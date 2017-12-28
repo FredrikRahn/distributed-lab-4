@@ -353,13 +353,14 @@ class RequestHandler(BaseHTTPRequestHandler):
         if not path:
             path = '/propagate'
         print byzantine_payload
-        
+        ind = 0
+
         for vessel in self.server.vessels:
             if vessel not in self.server.profile.node_ids:
                 #Send to all generals
                 # Assemble payload
-                payload = models.vote_data(self.server.vessel_id, byzantine_payload[i-1]) 
-
+                payload = models.vote_data(self.server.vessel_id, byzantine_payload[ind]) 
+                ind += 1
                 # Spawn thread for contact_vessel
                 thread = Thread(target=self.server.contact_vessel,
                                 args=(vessel, path, payload))

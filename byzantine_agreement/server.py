@@ -179,7 +179,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         builder = HtmlBuilder()
 
         # Number of results to be received and received
-        no_results_received = len(self.server.general.result_vector) - 1
+        no_results_received = len(self.server.general.result_vector)
         no_results_to_receive = len(self.server.vessels) - 1
         print '#received, #to receive', no_results_received, no_results_to_receive
 

@@ -42,8 +42,10 @@ class ByzantineServer(HTTPServer):
         self.no_round = 1
         # Set on_tie value (Attack)
         self.on_tie = True
-        # Init profile to General (All nodes start as generals)
-        self.profile = General()
+        # Init General (All nodes are Generals)
+        self.general = General()
+        # Init profile to None
+        self.profile = None
 
     def contact_vessel(self, vessel_ip, path, payload):
         '''
@@ -175,7 +177,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         # TODO: Implement get_result to return voting vector of recieved votes
         # for all nodes
         # use build_vote_result in builders to assemble node arrays
-        vote_vector = self.server.profile.vote_vector
+        vote_vector = self.server.general.vote_vector
 
         votes_page = builder.build_vote_result(vote_vector)
 
@@ -310,7 +312,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 
             # Wait until all votes has been recieved from all nodes
-            while len(self.server.profile.vote_vector.keys()) != (len(self.server.vessels) - len(Byzantine.node_ids)):
+            while len(self.server.general.vote_vector.keys()) != (len(self.server.vessels) - len(Byzantine.node_ids)):
                 # Print once every 3 seconds to prevent spam
                 time.sleep(3)
                 print 'Waiting for all votes to be recieved'
@@ -342,7 +344,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         node_id = parsed_data['node_id']
 
         # Save recieved vote in vote vector
-        self.server.profile.add_to_vote_vector(node_id, vote)
+        self.server.general.add_to_vote_vector(node_id, vote)
     
     def propagate_byzantine(self, byzantine_payload, path=''):
         '''

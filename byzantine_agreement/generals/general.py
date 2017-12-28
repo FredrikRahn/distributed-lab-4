@@ -22,6 +22,15 @@ class General(object):
         # Init profile to None
         self.my_profile = 'General'
 
+        # Init empty vote vector
+        self.vote_vector = {}
+
+        # Init empty Result vector
+        self.result_vector = {}
+
+    def add_to_vote_vector(self, node_id, vote):
+        self.vote_vector[node_id] = vote
+
     # def choose_role(self, numberOfNodes):
     #     """
     #     Chooses a role for a general

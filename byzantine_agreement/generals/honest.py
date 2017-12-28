@@ -19,10 +19,6 @@ class Honest(General):
         self.my_profile = 'Honest'
         # Init my_vote for readability
         self.my_vote = None
-        # Init empty vote vector
-        self.vote_vector = {}
-        # Init empty Result vector
-        self.result_vector = {}
 
     def vote_attack(self):
         """
@@ -41,6 +37,4 @@ class Honest(General):
         print 'Voted Retreat'
         self.my_vote = False
         return self.my_vote
-
-    def add_to_vote_vector(self, node_id, vote):
-        self.vote_vector[node_id] = vote
+    

@@ -426,9 +426,10 @@ class RequestHandler(BaseHTTPRequestHandler):
         no_votes_received = len(self.server.general.vote_vector.values())
         # Should receive votes from all but themselves
         no_votes_to_receieve = len(self.server.vessels) - 1
-
-        if no_votes_received == no_votes_to_receieve:
-            # We have received all votes, change round to 2
+        
+        # Check so we have received all the votes as well as that we have voted on this node
+        if no_votes_received == no_votes_to_receieve and self.server.profile.my_vote != None:
+            # Change round to 2
             self.server.no_round = 2
             # Call byzantine_agreement to start round 2 behaviour
             self.byzantine_agreement()

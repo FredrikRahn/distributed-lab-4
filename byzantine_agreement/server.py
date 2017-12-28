@@ -46,6 +46,10 @@ class ByzantineServer(HTTPServer):
         self.general = General()
         # Init profile to General
         self.profile = General()
+        # Init #byzantine nodes to 0
+        self.no_byzantine = 0
+        # Vectors received
+        self.vectors_received = []
 
     def contact_vessel(self, vessel_ip, path, payload):
         '''
@@ -174,7 +178,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         # Fetch voting results and write to output stream
         # Right now it temporarily shows only the votes the nodes themselves voted
-        # TODO: Implement get_result to return voting vector of recieved votes
+        # TODO: Implement get_result to return voting vector of received votes
         # for all nodes
         # use build_vote_result in builders to assemble node arrays
         vote_vector = self.server.general.vote_vector
@@ -199,6 +203,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         elif path[0] == 'propagate':
             if path[1] == 'vote':
                 self.propagate_vote()
+            elif path[1] == 'vote_vector':
+                self.propagate_vote_vector()
         else:
             raise ValueError, 'Unknown request path'
 
@@ -210,8 +216,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Init byzantine agreement
         arg = 'Attack'
 
-        # Set http header to OK
-        self.set_http_headers(200)
         self.byzantine_agreement(arg)
 
 
@@ -223,8 +227,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Init byzantine agreement
         arg = 'Retreat'
         
-        # Set http header to OK
-        self.set_http_headers(200)
         self.byzantine_agreement(arg)
 
     def vote_byzantine(self):
@@ -235,11 +237,9 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Init byzantine agreement
         arg = 'Byzantine'
         
-        # Set http header to OK
-        self.set_http_headers(200)
         self.byzantine_agreement(arg)
     
-    def byzantine_agreement(self, arg):
+    def byzantine_agreement(self, arg=''):
         '''
         Byzantine agreement algorithm
         '''
@@ -255,6 +255,22 @@ class RequestHandler(BaseHTTPRequestHandler):
                 # Unknown argument for byzantine agreement
                 self.set_http_headers(400)
                 raise ValueError, 'Unknown argument'
+
+        elif self.server.no_round == 2:    
+            # Send vote_vector to all other nodes if honest
+            if self.server.profile.my_profile == 'Honest':
+                path = '/propagate/vote_vector'
+                payload = self.server.general.vote_vector.values()
+                self.propagate_payload(payload, path)
+
+            elif self.server.profile.my_profile == 'Byzantine':
+                # Handle_byzantine_vote will propagate byzantine vote_vectors to all other nodes
+                self.handle_byzantine_vote()
+            else:
+                raise TypeError, 'Unknown Profile'
+        
+        else:
+            raise ValueError, 'Unknown round'
     
     def handle_honest_vote(self, arg):
         '''
@@ -300,6 +316,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             # Set profile to Byzantine
             print 'Profile set to Byzantine and appended ip to node_ids'
             self.server.profile = Byzantine()
+            self.server.no_byzantine += 1
             Byzantine.node_ids.append("10.1.0.%s" % self.server.vessel_id)
 
         elif self.server.profile.my_profile == 'Honest':
@@ -310,24 +327,30 @@ class RequestHandler(BaseHTTPRequestHandler):
             # Save vars for readability
             no_round = self.server.no_round
             no_nodes = len(self.server.vessels)
-            no_loyal = no_nodes - len(Byzantine.node_ids)
+            no_loyal = no_nodes - self.server.no_byzantine
             on_tie = self.server.on_tie
 
+            if no_round == 1:
+                # Wait until all votes has been received from all nodes
+                while len(self.server.general.vote_vector.keys()) != (len(self.server.vessels) - self.server.no_byzantine):
+                    # Print once every 3 seconds to prevent spam
+                    time.sleep(3)
+                    print 'Waiting for all votes to be received'
 
-            # Wait until all votes has been recieved from all nodes
-            while len(self.server.general.vote_vector.keys()) != (len(self.server.vessels) - len(Byzantine.node_ids)):
-                # Print once every 3 seconds to prevent spam
-                time.sleep(3)
-                print 'Waiting for all votes to be recieved'
+                # Setup model
+                data = models.byzantine_vote_input(no_round, no_nodes, no_loyal, on_tie)
 
-            # Setup model
-            data = models.byzantine_vote_input(no_round, no_nodes, no_loyal, on_tie)
-
-            # Set http header to OK
-            self.set_http_headers(200)
-            # Propagate payload
-            byzantine_payload = self.server.profile.vote(data)
-            self.propagate_byzantine(byzantine_payload, '/propagate/vote')
+                # Set http header to OK
+                self.set_http_headers(200)
+                # Propagate payload
+                byzantine_payload = self.server.profile.vote(data)
+                self.propagate_byzantine(byzantine_payload, '/propagate/vote')
+            elif no_round == 2:
+                # Setup model
+                data = models.byzantine_vote_input(no_round, no_nodes, no_loyal, on_tie)
+                # Propagate payload
+                byzantine_payload = self.server.profile.vote(data)
+                self.propagate_byzantine(byzantine_payload, '/propagate/vote_vector')
 
         else:
             # Unknown profile, set header and raise exception
@@ -346,8 +369,33 @@ class RequestHandler(BaseHTTPRequestHandler):
         vote = parsed_data['vote']
         node_id = parsed_data['node_id']
 
-        # Save recieved vote in vote vector
+        # Save received vote in vote vector
         self.server.general.add_to_vote_vector(node_id, vote)
+
+        no_votes_received = len(self.server.general.vote_vector.keys())
+        no_votes_to_receieve = no_votes_received - self.server.no_byzantine
+
+        if no_votes_received == no_votes_to_receieve:
+            # We have received all votes, change round to 2
+            self.server.no_round = 2
+            # Call byzantine_agreement to start round 2 behaviour
+            self.byzantine_agreement()
+
+            
+    def propagate_vote_vector(self):
+        '''
+        Handle received vote_vectors
+        '''
+        
+        post_data = self.parse_post_request()
+        payload_data = post_data['payload'][0]
+        print 'Vote_vector received: ', payload_data
+
+        # Save vote_vector in vectors_received
+        ind = len(self.server.vectors_received) - 1
+        self.server.vectors_received[ind] = payload_data
+
+
     
     def propagate_byzantine(self, byzantine_payload, path=''):
         '''

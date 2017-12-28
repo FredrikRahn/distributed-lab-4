@@ -372,8 +372,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Save received vote in vote vector
         self.server.general.add_to_vote_vector(node_id, vote)
 
-        no_votes_received = len(self.server.general.vote_vector.keys())
-        no_votes_to_receieve = no_votes_received - self.server.no_byzantine
+        no_votes_received = len(self.server.general.vote_vector.values())
+        no_votes_to_receieve = len(self.server.vessels) - self.server.no_byzantine
 
         if no_votes_received == no_votes_to_receieve:
             # We have received all votes, change round to 2

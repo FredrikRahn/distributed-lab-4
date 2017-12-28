@@ -26,7 +26,7 @@ class General(object):
         self.vote_vector = {}
 
         # Init empty Result vector
-        self.result_vector = {}
+        self.result_vector = []
 
     def add_to_vote_vector(self, node_id, vote):
         self.vote_vector[node_id] = vote

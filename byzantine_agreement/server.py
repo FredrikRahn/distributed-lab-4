@@ -50,6 +50,8 @@ class ByzantineServer(HTTPServer):
         self.no_byzantine = 0
         # Vectors received
         self.vectors_received = []
+        # Init result to None
+        self.result = None
 
     def contact_vessel(self, vessel_ip, path, payload):
         '''
@@ -176,15 +178,19 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Instantiate builder class
         builder = HtmlBuilder()
 
-        # Fetch voting results and write to output stream
-        # Right now it temporarily shows only the votes the nodes themselves voted
-        # TODO: Implement get_result to return voting vector of received votes
-        # for all nodes
-        # use build_vote_result in builders to assemble node arrays
-        vote_vector = self.server.general.vote_vector
+        # Number of results to be received and received
+        no_results_received = len(self.server.general.result_vector) - 1
+        no_results_to_receive = len(self.server.vessels) - 1
 
-        votes_page = builder.build_vote_result(vote_vector)
-
+        # If we havent received all results, show vote_vector on page
+        if no_results_received < no_results_to_receive:
+            vote_vector = self.server.general.vote_vector
+            votes_page = builder.build_votes_result(vote_vector)
+        elif no_results_to_receive == no_results_received:
+            # We have received all the results, now build them
+            result_vector = self.server.general.result_vector
+            result = self.server.result
+            votes_page = builder.build_result(result_vector, result)
         self.wfile.write(votes_page)
 
     def do_POST(self):
@@ -268,10 +274,55 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.handle_byzantine_vote()
             else:
                 raise TypeError, 'Unknown Profile'
-        
+        elif self.server.no_round == 3:
+            # Not technically a round, just that all vectors have been received and time to compute results
+            self.compute_results()
         else:
             raise ValueError, 'Unknown round'
     
+    def compute_results(self):
+        # Check for majority of each element in all the voting vectors received
+        # Amount received should be amount of vessels - 1
+        no_vectors = len(self.server.vessels) - 1
+        vector_length = len(self.server.general.vote_vector.values())
+        
+        # Init counting vars
+        no_true = 0
+        no_false = 0
+
+        # Need nested loop to check all the values on same index in all the vectors
+        for i in range(0, vector_length):
+            for vector in range(0, no_vectors):
+                if self.server.vectors_received[vector][i] == True:
+                    no_true += 1
+                elif self.server.vectors_received[vector][i] == False:
+                    no_false += 1
+                else:
+                    raise ValueError, 'Value is not True or False in vectors_received'
+            # Save majority result to result_vector
+            if no_true > no_false:
+                self.server.general.result_vector[i] = True
+            elif no_false > no_true: 
+                self.server.general.result_vector[i] = False
+            else:
+                # No majority, set value to UNKNOWN
+                self.server.general.result_vector[i] = 'UNKNOWN'
+
+            # Reset counters for next index to compare
+            no_true = 0
+            no_false = 0
+
+        # Now that result vector has been computed, count True/False values
+        no_true = self.server.general.result_vector.count(True)
+        no_false = self.server.general.result_vector.count(False)
+        if no_true > no_false:
+            self.server.result = True
+        elif no_false > no_true:
+            self.server.result = False
+        elif no_false == no_true:
+            self.server.result = 'UNKNOWN'
+                
+
     def handle_honest_vote(self, arg):
         '''
         TODO: Fix pydoc
@@ -373,7 +424,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.server.general.add_to_vote_vector(node_id, vote)
 
         no_votes_received = len(self.server.general.vote_vector.values())
-        no_votes_to_receieve = len(self.server.vessels) - self.server.no_byzantine
+        # Should receive votes from all but themselves
+        no_votes_to_receieve = len(self.server.vessels) - 1
 
         if no_votes_received == no_votes_to_receieve:
             # We have received all votes, change round to 2
@@ -389,13 +441,24 @@ class RequestHandler(BaseHTTPRequestHandler):
         
         post_data = self.parse_post_request()
         payload_data = post_data['payload'][0]
-        print 'Vote_vector received: ', payload_data
+        parsed_data = ast.literal_eval(payload_data)
+        vote = parsed_data['vote']
+        print 'Vote_vector received: ', vote
 
         # Save vote_vector in vectors_received
-        ind = len(self.server.vectors_received) - 1
-        self.server.vectors_received[ind] = payload_data
+        ind = len(self.server.vectors_received)
+        self.server.vectors_received[ind] = vote
 
-
+        print 'All vote_vectors received: ', self.server.vectors_received
+        # Check if we have received all the vote_vectors
+        no_vectors_received = len(self.server.vectors_received)
+        # Should receive vectors from all but themselves
+        no_vectors_to_receieve = len(self.server.vessels) - 1
+        
+        if no_vectors_received == no_vectors_to_receieve:
+            # Set round to 3, "final round"
+            self.server.no_round = 3
+            self.byzantine_agreement()
     
     def propagate_byzantine(self, byzantine_payload, path=''):
         '''

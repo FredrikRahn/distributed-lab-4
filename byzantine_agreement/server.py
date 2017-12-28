@@ -448,8 +448,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         print 'vote_vector: ', vote_vector
 
         # Save vote_vector in vectors_received
-        ind = len(self.server.vectors_received)
-        self.server.vectors_received[ind] = vote_vector
+        self.server.vectors_received.append(vote_vector)
 
         print 'All vote_vectors received: ', self.server.vectors_received
         # Check if we have received all the vote_vectors

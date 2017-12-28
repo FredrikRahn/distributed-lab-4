@@ -281,7 +281,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             # Set http header to OK
             self.set_http_headers(200)
             # Propagate the payload
-            self.propagate_payload(payload)
+            self.propagate_payload(payload, '/propagate/vote')
         
         else:
             # Unknown profile, set header and raise exception
@@ -322,7 +322,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.set_http_headers(200)
             # Propagate payload
             byzantine_payload = self.server.profile.vote(data)
-            self.propagate_byzantine(byzantine_payload)
+            self.propagate_byzantine(byzantine_payload, '/propagate/vote')
 
         else:
             # Unknown profile, set header and raise exception

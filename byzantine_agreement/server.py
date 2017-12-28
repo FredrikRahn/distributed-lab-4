@@ -428,11 +428,13 @@ class RequestHandler(BaseHTTPRequestHandler):
         no_votes_to_receieve = len(self.server.vessels) - 1
         
         # Check so we have received all the votes as well as that we have voted on this node
-        if no_votes_received == no_votes_to_receieve and self.server.profile.my_vote != None:
-            # Change round to 2
-            self.server.no_round = 2
-            # Call byzantine_agreement to start round 2 behaviour
-            self.byzantine_agreement()
+        if self.server.profile.my_profile != 'General':
+            # Properly check so we have recieved a profile
+            if no_votes_received == no_votes_to_receieve and self.server.profile.my_vote != None:
+                # Change round to 2
+                self.server.no_round = 2
+                # Call byzantine_agreement to start round 2 behaviour
+                self.byzantine_agreement()
 
             
     def propagate_vote_vector(self):

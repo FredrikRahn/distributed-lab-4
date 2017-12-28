@@ -36,5 +36,5 @@ class HtmlBuilder(object):
         '''
         entry = ''
         for key in vote_vector.keys():
-            entry += self.vote_result % str(key) + ' ' + str(vote_vector[key])
+            entry += self.vote_result % (str(key) + ' ' + str(vote_vector[key]))
         return entry

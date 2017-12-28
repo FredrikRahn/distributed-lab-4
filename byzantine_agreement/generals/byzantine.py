@@ -9,6 +9,8 @@ class Byzantine(General):
     Byzantine class
         :param General: Parent class
     """
+    # Init byzantine node_id(s) vector
+    node_ids = []
 
     def __init__(self):
         # Run init on extended General class
@@ -30,15 +32,7 @@ class Byzantine(General):
             :param no_total: total number of nodes
             :param on_tie: action on tie
         """
-        print voting_data
-
-        no_round = voting_data['no_round']
-        no_nodes = voting_data['no_nodes']
-        no_loyal = voting_data['no_loyal']
-        on_tie = voting_data['on_tie']
-
-
-
+        
         if voting_data['no_round'] == 1:
             self.my_vote = self.vote_round1(voting_data['no_loyal'], voting_data['on_tie'])
         elif voting_data['no_round'] == 2:

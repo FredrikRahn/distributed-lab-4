@@ -44,8 +44,8 @@ class ByzantineServer(HTTPServer):
         self.on_tie = True
         # Init General (All nodes are Generals)
         self.general = General()
-        # Init profile to None
-        self.profile = None
+        # Init profile to General
+        self.profile = General()
 
     def contact_vessel(self, vessel_ip, path, payload):
         '''

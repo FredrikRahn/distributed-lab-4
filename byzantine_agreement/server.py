@@ -7,6 +7,7 @@ from urllib import urlencode
 from urlparse import parse_qs
 from threading import Thread
 import ast
+import time
 
 import models
 from helper import extract_ep
@@ -41,26 +42,8 @@ class ByzantineServer(HTTPServer):
         self.no_round = 1
         # Set on_tie value (Attack)
         self.on_tie = True
-        # Instantiate general class, all nodes are generals
-        self.general = General()
-        # Init profile var
-        self.profile = self.decide_profile(len(vessel_list))
-
-
-    def decide_profile(self, numberOfNodes):
-        """
-        Decides on a profile by calling the choose_role function on the general class
-        Return the class chosen
-            :param numberOfNodes: Number of nodes in the network
-        """
-        if numberOfNodes > 0:
-            role = self.general.choose_role(numberOfNodes)
-            if role == 'Byzantine':
-                return Byzantine()
-            else:
-                return Honest()
-        else:
-            raise ValueError, 'No nodes in the network'
+        # Init profile to General (All nodes start as generals)
+        self.profile = General()
 
     def contact_vessel(self, vessel_ip, path, payload):
         '''
@@ -118,16 +101,6 @@ class ByzantineServer(HTTPServer):
                 # A good practice would be to try again if the request failed
                 # Here, we do it only once
                 self.contact_vessel(vessel, path, payload)
-    
-    def byzantine_agreement(self):
-        '''
-        init byzantine agreement algorithm
-        '''
-        # Init vote_vectors
-        for i in range(1, len(self.vessels)):
-            self.profile.vote_vector['node_%d' % i] = None
-        
-
 
 class RequestHandler(BaseHTTPRequestHandler):
     '''
@@ -222,7 +195,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             elif path[1] == 'byzantine':
                 self.vote_byzantine()
         elif path[0] == 'propagate':
-            self.propagate()
+            if path[1] == 'vote':
+                self.propagate_vote()
         else:
             raise ValueError, 'Unknown request path'
 
@@ -231,79 +205,142 @@ class RequestHandler(BaseHTTPRequestHandler):
         TODO: Implement
             :param self: temp
         """
-        # Check so profile is Honest
-        if self.server.profile.my_profile == 'Honest':
-            # Set http header to OK
-            self.set_http_headers(200)
-            # Assemble payload
-            vessel_id = self.server.vessel_id
-            vote = self.server.profile.vote_attack()
-            payload = models.vote_data(vessel_id, vote)
-            # Propagate the payload
-            self.propagate_payload(payload)
+        # Init byzantine agreement
+        arg = 'Attack'
 
-        else:
-            # Set http header to Bad request
-            self.set_http_headers(400)
-            raise TypeError, 'Wrong profile type (not honest)'
+        # Set http header to OK
+        self.set_http_headers(200)
+        self.byzantine_agreement(arg)
+
 
     def vote_retreat(self):
         """
         TODO: Implement
             :param self: temp
         """
-        # Check so profile is Honest
-        if self.server.profile.my_profile == 'Honest':
-            # Set http header to OK
-            self.set_http_headers(200)
-            # Assemble payload
-            vessel_id = self.server.vessel_id
-            vote = self.server.profile.vote_retreat()
-            payload = models.vote_data(vessel_id, vote)
-            # Propagate the payload
-            self.propagate_payload(payload)
-        else:
-            # Set http header to Bad request
-            self.set_http_headers(400)
-            raise TypeError, 'Wrong profile type (not honest)'
+        # Init byzantine agreement
+        arg = 'Retreat'
+        
+        # Set http header to OK
+        self.set_http_headers(200)
+        self.byzantine_agreement(arg)
 
     def vote_byzantine(self):
         """
         TODO: Implement
             :param self: temp
         """
-        # Save vars for readability
-        no_round = self.server.no_round
-        no_nodes = len(self.server.vessels)
-        no_loyal = no_nodes - General.nrByzantineAllowed
-        on_tie = self.server.on_tie
+        # Init byzantine agreement
+        arg = 'Byzantine'
+        
+        # Set http header to OK
+        self.set_http_headers(200)
+        self.byzantine_agreement(arg)
+    
+    def byzantine_agreement(self, arg):
+        '''
+        Byzantine agreement algorithm
+        '''
+        if self.server.no_round == 1:
+            # Handle round 1 behaviour
+            if arg in ('Attack', 'Retreat'):
+                self.handle_honest_vote(arg)
+            
+            elif arg == 'Byzantine':
+                self.handle_byzantine_vote()
 
-        # Setup model
-        data = models.byzantine_vote_input(no_round, no_nodes, no_loyal, on_tie)
+            else:
+                # Unknown argument for byzantine agreement
+                self.set_http_headers(400)
+                raise ValueError, 'Unknown argument'
+    
+    def handle_honest_vote(self, arg):
+        '''
+        TODO: Fix pydoc
+        '''
+        # If no profile has been chosen yet set profile to honest
+        if self.server.profile.my_profile == 'General':
+            # Set profile to Honest
+            self.server.profile = Honest()
+        elif self.server.profile.my_profile == 'Byzantine':
+            # Profile is set to Byzantine which can only vote through Byzantine button
+            raise ValueError, 'Profile set to Byzantine cant vote attack or retreat'
+        
+        if self.server.profile.my_profile == 'Honest':
+            # Assemble payload
+            if arg == 'Attack':
+                vote = self.server.profile.vote_attack()
+            elif arg == 'Retreat':
+                vote = self.server.profile.vote_retreat()
+            else:
+                raise ValueError, 'Unknown argument for byzantine agreement'
 
-        # Check so profile is byzantine
-        if self.server.profile.my_profile == 'Byzantine':
+            vessel_id = self.server.vessel_id
+            payload = models.vote_data(vessel_id, vote)
+            
             # Set http header to OK
             self.set_http_headers(200)
+            # Propagate the payload
+            self.propagate_payload(payload)
+        
+        else:
+            # Unknown profile, set header and raise exception
+            self.set_http_headers(400)
+            raise ValueError, 'Unknown profile'
+
+    def handle_byzantine_vote(self):
+        '''
+        TODO: Fix pydoc
+        '''
+        if self.server.profile.my_profile == 'General':
+            # Set profile to Byzantine
+            self.server.profile = Byzantine()
+            Byzantine.node_ids.append(self.server.vessel_id)
+
+        elif self.server.profile.my_profile == 'Honest':
+            # Profile is set to Honest which can only vote through attack/retreat buttons
+            raise ValueError, 'Profile set to Honest cant vote byzantine'
+        
+        if self.server.profile.my_profile == 'Byzantine':
+            # Save vars for readability
+            no_round = self.server.no_round
+            no_nodes = len(self.server.vessels)
+            no_loyal = no_nodes - len(Byzantine.node_ids)
+            on_tie = self.server.on_tie
+
+
+            # Wait until all votes has been recieved from all nodes
+            while len(self.server.profile.vote_vector.keys()) != (len(self.server.vessels) - len(Byzantine.node_ids)):
+                # Print once every 3 seconds to prevent spam
+                time.sleep(3)
+                print 'Waiting for all votes to be recieved'
+
+            # Setup model
+            data = models.byzantine_vote_input(no_round, no_nodes, no_loyal, on_tie)
+
+            # Set http header to OK
+            self.set_http_headers(200)
+            # Propagate payload
             byzantine_payload = self.server.profile.vote(data)
             self.propagate_byzantine(byzantine_payload)
-        else:
-            # Set http header to Bad request
-            self.set_http_headers(400)
-            raise TypeError, 'Wrong profile type (not byzantine)'
 
-    def propagate(self):
+        else:
+            # Unknown profile, set header and raise exception
+            self.set_http_headers(400)
+            raise ValueError, 'Unknown profile'
+
+    def propagate_vote(self):
         '''
-        Handle requests on the /propagate endpoint
+        Handle requests on the /propagate/vote endpoint
+        TODO: Generalize func to handle all propagates
         '''
         post_data = self.parse_post_request()
-        print 'post_data: ', post_data
-        data = post_data['payload'][0]
-        print 'payload data: ', data
-        parsed_data = ast.literal_eval(data)
+        payload_data = post_data['payload'][0]
+        parsed_data = ast.literal_eval(payload_data)
         print 'parsed data: ', parsed_data
         vote = parsed_data['vote']
         node_id = parsed_data['node_id']
+
         # Save recieved vote in vote vector
         self.server.profile.add_to_vote_vector(node_id, vote)
     

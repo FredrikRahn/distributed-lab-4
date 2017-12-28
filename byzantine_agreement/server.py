@@ -297,7 +297,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         if self.server.profile.my_profile == 'General':
             # Set profile to Byzantine
             self.server.profile = Byzantine()
-            Byzantine.node_ids.append(self.server.vessel_id)
+            Byzantine.node_ids.append("10.1.0.%s" % self.server.vessel_id)
 
         elif self.server.profile.my_profile == 'Honest':
             # Profile is set to Honest which can only vote through attack/retreat buttons
@@ -352,18 +352,17 @@ class RequestHandler(BaseHTTPRequestHandler):
         '''
         if not path:
             path = '/propagate'
-
-        for i in range(1, len(self.server.vessels)):
-            if i != self.server.vessel_id:
-                # Send to everyone but itself
-                vessel_ip = "10.1.0.%d" % i
-
+        print byzantine_payload
+        
+        for vessel in self.server.vessels:
+            if vessel not in self.server.profile.node_ids:
+                #Send to all generals
                 # Assemble payload
                 payload = models.vote_data(self.server.vessel_id, byzantine_payload[i-1]) 
 
                 # Spawn thread for contact_vessel
                 thread = Thread(target=self.server.contact_vessel,
-                                args=(vessel_ip, path, payload))
+                                args=(vessel, path, payload))
 
                 # Kill the process if we kill the server
                 thread.daemon = True

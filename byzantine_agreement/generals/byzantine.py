@@ -30,9 +30,9 @@ class Byzantine(General):
         """
         
         if voting_data['no_round'] == 1:
-            self.my_vote = self.vote_round1(voting_data['no_loyal'], voting_data['on_tie'])
+            return self.vote_round1(voting_data['no_loyal'], voting_data['on_tie'])
         elif voting_data['no_round'] == 2:
-            self.my_vote = self.vote_round2(voting_data['no_loyal'], voting_data['no_nodes'], voting_data['on_tie'])
+            return self.vote_round2(voting_data['no_loyal'], voting_data['no_nodes'], voting_data['on_tie'])
         else:
             raise ValueError, 'Invalid round count'
 

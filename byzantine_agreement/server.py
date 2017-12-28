@@ -444,14 +444,12 @@ class RequestHandler(BaseHTTPRequestHandler):
         
         post_data = self.parse_post_request()
         payload_data = post_data['payload'][0]
-        parsed_data = ast.literal_eval(payload_data)
-        print 'parsed data: ', parsed_data
-        vote = parsed_data['vote']
-        print 'vote_vector: ', vote
+        vote_vector = ast.literal_eval(payload_data)
+        print 'vote_vector: ', vote_vector
 
         # Save vote_vector in vectors_received
         ind = len(self.server.vectors_received)
-        self.server.vectors_received[ind] = vote
+        self.server.vectors_received[ind] = vote_vector
 
         print 'All vote_vectors received: ', self.server.vectors_received
         # Check if we have received all the vote_vectors

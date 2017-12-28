@@ -37,4 +37,3 @@ class Honest(General):
         print 'Voted Retreat'
         self.my_vote = False
         return self.my_vote
-    

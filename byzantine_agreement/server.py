@@ -304,13 +304,11 @@ class RequestHandler(BaseHTTPRequestHandler):
             # Send vote_vector to all other nodes if honest
             if self.server.profile.my_profile == 'Honest':
                 path = '/propagate/vote_vector'
-                payload = self.server.general.vote_vector.values()
+                payload = [self.server.vessel_id, self.server.general.vote_vector.values()]
                 self.propagate_payload(payload, path)
 
             elif self.server.profile.my_profile == 'Byzantine':
                 # Handle_byzantine_vote will propagate byzantine vote_vectors to all other nodes
-                #TODO: DEBUGGING REMOVE
-                print 'Do we even enter?'
                 self.handle_byzantine_vote()
             else:
                 raise TypeError, 'Unknown Profile'
@@ -389,7 +387,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             payload = models.vote_data(vessel_id, vote)
 
             # Insert empty string on spot <vessel_id> so nodes correctly compare only received votes 
-            self.server.general.add_to_vote_vector(vessel_id, '')
+            self.server.general.add_to_vote_vector(vessel_id, vote)
             
             # Set http header to OK
             self.set_http_headers(200)
@@ -439,7 +437,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 # Set http header to OK
                 self.set_http_headers(200)
                 # Propagate payload
-                byzantine_payload = self.server.profile.vote(data)
+                byzantine_payload = [self.server.vessel_id, self.server.profile.vote(data)]
                 self.propagate_byzantine(byzantine_payload, '/propagate/vote')
             elif no_round == 2:
                 # Setup model
@@ -482,9 +480,14 @@ class RequestHandler(BaseHTTPRequestHandler):
         '''
         
         post_data = self.parse_post_request()
-        payload_data = post_data['payload'][0]
-        vote_vector = ast.literal_eval(payload_data)
+        node_id = post_data['payload'][0]
+        vote_data = post_data['payload'][1]
+        vote_vector = ast.literal_eval(vote_data)
         print 'vote_vector: ', vote_vector
+        print 'Sent from node: ', node_id
+
+        index = int(node_id) - 1
+        vote_vector[index] = ''
 
         # Save vote_vector in vectors_received
         self.server.general.vectors_received.append(vote_vector)

@@ -84,12 +84,15 @@ class Lab4():
     # run(self)
     # Run the lab 1
 
-    def run(self):
+    def run(self, amount=''):
         "Run the lab 1 simulation environment"
         # local variables
-        nbOfServersPerRegion = 2
+        if amount:
+            nbOfServersPerRegion = amount
+        else:
+            nbOfServersPerRegion = 4
         nbOfClientsPerRegion = 2
-        nbOfRegions = 2
+        nbOfRegions = 1
         localJitter = 10  # ms, the evolution of the time between two consecutive packets
         # We create the topology
         topology = Lab1Topology(nbOfServersPerRegion,

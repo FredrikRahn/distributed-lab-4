@@ -420,8 +420,6 @@ class RequestHandler(BaseHTTPRequestHandler):
             no_nodes = len(self.server.vessels)
             no_loyal = no_nodes - self.server.no_byzantine
             on_tie = self.server.on_tie
-            #TODO: DEBUGGING REMOVE
-            print 'Do we enter? If so what round?', self.server.no_round
 
             if no_round == 1:
                 # Wait until all votes has been received from all nodes
@@ -480,8 +478,9 @@ class RequestHandler(BaseHTTPRequestHandler):
         '''
         
         post_data = self.parse_post_request()
-        node_id = post_data['payload'][0]
-        vote_data = post_data['payload'][1]
+        print 'Post_data: ', post_data
+        node_id = post_data['payload'][0][0]
+        vote_data = post_data['payload'][0][1]
         vote_vector = ast.literal_eval(vote_data)
         print 'vote_vector: ', vote_vector
         print 'Sent from node: ', node_id

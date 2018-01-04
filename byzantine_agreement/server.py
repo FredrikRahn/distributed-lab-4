@@ -402,8 +402,13 @@ class RequestHandler(BaseHTTPRequestHandler):
             elif no_round == 2:
                 # Setup model
                 data = models.byzantine_vote_input(no_round, no_nodes, no_loyal, on_tie)
+
                 # Propagate payload
                 byzantine_payload = self.server.profile.vote(data)
+
+                #TODO: DEBUGGING PLS REMOF
+                print 'Byzantine payload : ', byzantine_payload
+                
                 self.propagate_byzantine(byzantine_payload, '/propagate/vote_vector')
 
         else:

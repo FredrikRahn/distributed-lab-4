@@ -196,7 +196,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             if self.server.no_round == 3:
                 result_vector = self.server.general.result_vector
                 print 'Result vector: ', result_vector
-                result = self.server.result
+                result = self.server.general.result
                 print 'Result: ', result
                 votes_page = builder.build_result(result_vector, result)
                 self.wfile.write(votes_page)
@@ -356,12 +356,12 @@ class RequestHandler(BaseHTTPRequestHandler):
         no_true = self.server.general.result_vector.count(True)
         no_false = self.server.general.result_vector.count(False)
         if no_true > no_false:
-            self.server.result = True
+            self.server.general.result = True
         elif no_false > no_true:
-            self.server.result = False
+            self.server.general.result = False
         elif no_false == no_true:
             # No majority, set value to on_tie
-            self.server.general.result_vector.append(self.server.on_tie)
+            self.server.general.result = self.server.on_tie
                 
 
     def handle_honest_vote(self, arg):

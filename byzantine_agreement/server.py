@@ -358,7 +358,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         elif no_false > no_true:
             self.server.result = False
         elif no_false == no_true:
-            self.server.result = 'UNKNOWN'
+            # No majority, set value to on_tie
+            self.server.general.result_vector.append(self.server.on_tie)
                 
 
     def handle_honest_vote(self, arg):

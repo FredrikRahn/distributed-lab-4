@@ -479,9 +479,9 @@ class RequestHandler(BaseHTTPRequestHandler):
         post_data = self.parse_post_request()
         payload_data = post_data['payload'][0]
         parsed_data = ast.literal_eval(payload_data)
-        print 'parsed data: ', parsed_data
-        vote_vector = parsed_data['vote']
-        node_id = parsed_data['node_id']
+        print 'propagate_vote_vector: ', parsed_data
+        vote_vector = parsed_data[1]
+        node_id = parsed_data[0]
         print 'Node_id, vote_vector', node_id, vote_vector
         
         

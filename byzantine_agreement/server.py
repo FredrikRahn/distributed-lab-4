@@ -320,8 +320,10 @@ class RequestHandler(BaseHTTPRequestHandler):
     
     def compute_results(self):
         # Check for majority of each element in all the voting vectors received
-        # Amount received should be amount of vessels - 1
-        no_vectors = len(self.server.vessels) - 1
+        # Amount received should be amount of vessels
+        # Append vote_vector to vote_vectors received
+        self.server.general.vectors_received.append(self.server.general.vote_vector.values())
+        no_vectors = len(self.server.vessels)
         vector_length = len(self.server.general.vote_vector.values())
         
         # Init counting vars

@@ -180,7 +180,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         # Number of results to be received and received
         no_results_received = len(self.server.general.result_vector)
-        no_results_to_receive = len(self.server.vessels) - 1
+        no_results_to_receive = len(self.server.vessels)
         print '#results_received, #results_to_receive', no_results_received, no_results_to_receive
 
         # If we havent received all results, show vote_vector on page
@@ -379,6 +379,10 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             vessel_id = self.server.vessel_id
             payload = models.vote_data(vessel_id, vote)
+
+            self.server.general.add_to_vote_vector(vessel_id, vote)
+            # TODO: DEBUGGING REMOVE
+            print 'Added self to vote_vector: ', self.server.general.vote_vector
             
             # Set http header to OK
             self.set_http_headers(200)

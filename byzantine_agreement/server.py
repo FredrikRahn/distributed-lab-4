@@ -179,11 +179,11 @@ class RequestHandler(BaseHTTPRequestHandler):
         print 'Vectors received: ', self.server.general.vectors_received
 
         # Number of results to be received and received
-        no_results_received = len(self.server.general.result_vector)
         if self.server.profile.my_profile == 'Byzantine':
             no_results_to_receive = len(self.server.vessels) - 1
         else: 
             no_results_to_receive = len(self.server.vessels)
+        no_results_received = len(self.server.general.result_vector)
         print '#results_received, #results_to_receive', no_results_received, no_results_to_receive
 
         # If we havent received all results, show vote_vector on page
@@ -191,7 +191,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             vote_vector = self.server.general.vote_vector
             votes_page = builder.build_votes_result(vote_vector)
             self.wfile.write(votes_page)
-        elif no_results_to_receive >= no_results_received:
+        elif no_results_to_receive <= no_results_received:
             # We have received all the results, now build them
             if self.server.no_round == 3:
                 result_vector = self.server.general.result_vector

@@ -304,7 +304,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             # Send vote_vector to all other nodes if honest
             if self.server.profile.my_profile == 'Honest':
                 path = '/propagate/vote_vector'
-                payload = [self.server.vessel_id, self.server.general.vote_vector.values()]
+                payload = self.server.general.vote_vector.values()
                 self.propagate_payload(payload, path)
 
             elif self.server.profile.my_profile == 'Byzantine':
@@ -386,6 +386,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             vessel_id = self.server.vessel_id
             payload = models.vote_data(vessel_id, vote)
 
+            # Insert empty string on spot <vessel_id> so nodes correctly compare only received votes 
             self.server.general.add_to_vote_vector(vessel_id, vote)
             
             # Set http header to OK
@@ -419,6 +420,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             no_nodes = len(self.server.vessels)
             no_loyal = no_nodes - self.server.no_byzantine
             on_tie = self.server.on_tie
+            #TODO: DEBUGGING REMOVE
+            print 'Do we enter? If so what round?', self.server.no_round
 
             if no_round == 1:
                 # Wait until all votes has been received from all nodes
@@ -478,18 +481,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         
         post_data = self.parse_post_request()
         payload_data = post_data['payload'][0]
-        parsed_data = ast.literal_eval(payload_data)
-        print 'propagate_vote_vector: ', parsed_data
-        vote_vector = parsed_data[1]
-        node_id = parsed_data[0]
-        print 'Node_id, vote_vector', node_id, vote_vector
-        
-        
+        vote_vector = ast.literal_eval(payload_data)
         print 'vote_vector: ', vote_vector
-        #print 'Sent from node: ', node_id
-
-        index = int(node_id) - 1
-        vote_vector[index] = ''
 
         # Save vote_vector in vectors_received
         self.server.general.vectors_received.append(vote_vector)
@@ -511,8 +504,12 @@ class RequestHandler(BaseHTTPRequestHandler):
             if vessel not in self.server.profile.node_ids:
                 #Send to all generals
                 # Assemble payload
-                payload = models.vote_data(self.server.vessel_id, byzantine_payload[ind]) 
-                ind += 1
+                if self.server.no_round != 2:
+                    payload = models.vote_data(self.server.vessel_id, byzantine_payload[ind]) 
+                    ind += 1
+                else: 
+                    payload = byzantine_payload[ind]
+                    ind += 1
                 # Spawn thread for contact_vessel
                 thread = Thread(target=self.server.contact_vessel,
                                 args=(vessel, path, payload))

@@ -40,8 +40,8 @@ class HtmlBuilder(object):
         return entry
 
     def build_result(self, result_vector, result):
-        result = 'Result vector: '
+        result_string = 'Result vector: '
         for vote in result_vector:
-            result += self.vote_result % (str(vote) + '\n')
-        result += '\n' + 'Result: ' + str(result)
-        return result
+            result_string += self.vote_result % (str(vote) + ' ')
+        result_string += '\n' + 'Result: ' + str(result)
+        return result_string

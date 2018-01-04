@@ -322,11 +322,14 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Check for majority of each element in all the voting vectors received
         # Amount received should be amount of vessels
         # Append vote_vector to vote_vectors received
-        vector_to_append = self.server.general.vote_vector.values()
-        vector_to_append[self.server.vessel_id - 1] = ''
-        self.server.general.vectors_received.append(vector_to_append)
+        if self.server.profile.my_profile == 'Byzantine':
+            no_vectors = len(self.server.vessels) - 1
+        else: 
+            vector_to_append = self.server.general.vote_vector.values()
+            vector_to_append[self.server.vessel_id - 1] = ''
+            self.server.general.vectors_received.append(vector_to_append)
+            no_vectors = len(self.server.vessels)
         
-        no_vectors = len(self.server.vessels)
         vector_length = len(self.server.general.vote_vector.values())
         
         # Init counting vars

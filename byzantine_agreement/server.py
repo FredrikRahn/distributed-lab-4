@@ -190,7 +190,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         if no_results_received < no_results_to_receive:
             vote_vector = self.server.general.vote_vector
             votes_page = builder.build_votes_result(vote_vector)
-        elif no_results_to_receive == no_results_received:
+            self.wfile.write(votes_page)
+        elif no_results_to_receive >= no_results_received:
             # We have received all the results, now build them
             if self.server.no_round == 3:
                 result_vector = self.server.general.result_vector
@@ -198,7 +199,8 @@ class RequestHandler(BaseHTTPRequestHandler):
                 result = self.server.result
                 print 'Result: ', result
                 votes_page = builder.build_result(result_vector, result)
-        self.wfile.write(votes_page)
+                self.wfile.write(votes_page)
+
 
     def do_POST(self):
         '''

@@ -273,6 +273,8 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             elif self.server.profile.my_profile == 'Byzantine':
                 # Handle_byzantine_vote will propagate byzantine vote_vectors to all other nodes
+                #TODO: DEBUGGING REMOVE
+                print 'Do we even enter?'
                 self.handle_byzantine_vote()
             else:
                 raise TypeError, 'Unknown Profile'
@@ -382,7 +384,9 @@ class RequestHandler(BaseHTTPRequestHandler):
             no_nodes = len(self.server.vessels)
             no_loyal = no_nodes - self.server.no_byzantine
             on_tie = self.server.on_tie
-
+            #TODO: DEBUGGING REMOVE
+            print 'Do we enter? If so what round?', self.server.no_round
+            
             if no_round == 1:
                 # Wait until all votes has been received from all nodes
                 while len(self.server.general.vote_vector.keys()) != (len(self.server.vessels) - self.server.no_byzantine):
@@ -408,7 +412,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
                 #TODO: DEBUGGING PLS REMOF
                 print 'Byzantine payload : ', byzantine_payload
-                
+
                 self.propagate_byzantine(byzantine_payload, '/propagate/vote_vector')
 
         else:

@@ -387,7 +387,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             payload = models.vote_data(vessel_id, vote)
 
             # Insert empty string on spot <vessel_id> so nodes correctly compare only received votes 
-            self.server.general.add_to_vote_vector(vessel_id, vote)
+            self.server.general.add_to_vote_vector(vessel_id, '')
             
             # Set http header to OK
             self.set_http_headers(200)
@@ -420,8 +420,6 @@ class RequestHandler(BaseHTTPRequestHandler):
             no_nodes = len(self.server.vessels)
             no_loyal = no_nodes - self.server.no_byzantine
             on_tie = self.server.on_tie
-            #TODO: DEBUGGING REMOVE
-            print 'Do we enter? If so what round?', self.server.no_round
 
             if no_round == 1:
                 # Wait until all votes has been received from all nodes
@@ -448,7 +446,8 @@ class RequestHandler(BaseHTTPRequestHandler):
 
                 #TODO: DEBUGGING PLS REMOF
                 print 'Byzantine payload : ', byzantine_payload
-
+                for list in byzantine_payload:
+                    list[self.server.vessel_id - 1] = ''
                 self.propagate_byzantine(byzantine_payload, '/propagate/vote_vector')
 
         else:

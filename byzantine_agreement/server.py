@@ -247,10 +247,35 @@ class RequestHandler(BaseHTTPRequestHandler):
         
         self.byzantine_agreement(arg)
     
+    def change_round(self):
+        # Logic for changing round
+        no_votes_received = len(self.server.general.vote_vector.values())
+        # Should receive votes from all but themselves
+        no_votes_to_receieve = len(self.server.vessels) - 1
+        # Check if we have received all the vote_vectors
+        no_vectors_received = len(self.server.general.vectors_received)
+        # Should receive vectors from all but themselves
+        no_vectors_to_receieve = len(self.server.vessels) - 1
+        
+        # Check so we have received all the votes as well as that we have voted on this node
+        if self.server.profile.my_profile != 'General' and self.server.no_round == 1:
+            # Properly check so we have recieved a profile
+            if no_votes_received == no_votes_to_receieve and self.server.profile.my_vote != None:
+                # Change round to 2
+                self.server.no_round = 2
+                self.byzantine_agreement()
+
+        if no_vectors_received == no_vectors_to_receieve and self.server.no_round == 2:
+            # Set round to 3, "final round"
+            self.server.no_round = 3
+            self.byzantine_agreement()
+
     def byzantine_agreement(self, arg=''):
         '''
         Byzantine agreement algorithm
         '''
+
+
         if self.server.no_round == 1:
             # Handle round 1 behaviour
             if arg in ('Attack', 'Retreat'):
@@ -386,7 +411,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             on_tie = self.server.on_tie
             #TODO: DEBUGGING REMOVE
             print 'Do we enter? If so what round?', self.server.no_round
-            
+
             if no_round == 1:
                 # Wait until all votes has been received from all nodes
                 while len(self.server.general.vote_vector.keys()) != (len(self.server.vessels) - self.server.no_byzantine):
@@ -435,19 +460,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Save received vote in vote vector
         self.server.general.add_to_vote_vector(node_id, vote)
 
-        no_votes_received = len(self.server.general.vote_vector.values())
-        # Should receive votes from all but themselves
-        no_votes_to_receieve = len(self.server.vessels) - 1
-        
-        # Check so we have received all the votes as well as that we have voted on this node
-        if self.server.profile.my_profile != 'General':
-            # Properly check so we have recieved a profile
-            if no_votes_received == no_votes_to_receieve and self.server.profile.my_vote != None:
-                # Change round to 2
-                self.server.no_round = 2
-                # Call byzantine_agreement to start round 2 behaviour
-                self.byzantine_agreement()
-
+        # Do we need to change round ? 
+        self.change_round()
             
     def propagate_vote_vector(self):
         '''
@@ -463,15 +477,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.server.general.vectors_received.append(vote_vector)
         print 'Vote_vectors received: ', self.server.general.vectors_received
 
-        # Check if we have received all the vote_vectors
-        no_vectors_received = len(self.server.general.vectors_received)
-        # Should receive vectors from all but themselves
-        no_vectors_to_receieve = len(self.server.vessels) - 1
-        
-        if no_vectors_received == no_vectors_to_receieve:
-            # Set round to 3, "final round"
-            self.server.no_round = 3
-            self.byzantine_agreement()
+        # Do we need to change round ? 
+        self.change_round()
     
     def propagate_byzantine(self, byzantine_payload, path=''):
         '''

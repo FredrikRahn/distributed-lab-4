@@ -513,7 +513,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                     payload = models.vote_data(self.server.vessel_id, byzantine_payload[ind]) 
                     ind += 1
                 else: 
-                    payload = byzantine_payload[ind]
+                    payload = byzantine_payload[1][ind]
                     ind += 1
                 # Spawn thread for contact_vessel
                 thread = Thread(target=self.server.contact_vessel,

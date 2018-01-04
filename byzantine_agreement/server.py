@@ -493,8 +493,12 @@ class RequestHandler(BaseHTTPRequestHandler):
             if vessel not in self.server.profile.node_ids:
                 #Send to all generals
                 # Assemble payload
-                payload = models.vote_data(self.server.vessel_id, byzantine_payload[ind]) 
-                ind += 1
+                if self.server.no_round != 2:
+                    payload = models.vote_data(self.server.vessel_id, byzantine_payload[ind]) 
+                    ind += 1
+                else: 
+                    payload = byzantine_payload[ind]
+                    ind += 1
                 # Spawn thread for contact_vessel
                 thread = Thread(target=self.server.contact_vessel,
                                 args=(vessel, path, payload))

@@ -253,7 +253,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Logic for changing round
         no_votes_received = len(self.server.general.vote_vector.values())
         # Should receive votes from all but themselves
-        no_votes_to_receieve = len(self.server.vessels) - 1
+        no_votes_to_receieve = len(self.server.vessels)
         # Check if we have received all the vote_vectors
         no_vectors_received = len(self.server.general.vectors_received)
         # Should receive vectors from all but themselves

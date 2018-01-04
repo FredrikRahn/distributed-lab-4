@@ -35,6 +35,7 @@ class General(object):
         self.result = None
 
     def add_to_vote_vector(self, node_id, vote):
+        node_id = int(node_id)
         self.vote_vector[node_id] = vote
 
     # def choose_role(self, numberOfNodes):

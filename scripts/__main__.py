@@ -21,7 +21,7 @@ if __name__ == '__main__':
             elif len(sys.argv) == 4:
                 if sys.argv[2] == 'show' and sys.argv[3].isdigit:
                     webbrowser.open(PATH_RESOURCES + 'multiple_instances.html')
-                    SCRIPT.run(sys.argv[3])
+                    SCRIPT.run(int(sys.argv[3]))
         elif SCRIPT_TO_RUN == 'show':
             # User want to only open multiple instances
             webbrowser.open(PATH_RESOURCES + 'multiple_instances.html')

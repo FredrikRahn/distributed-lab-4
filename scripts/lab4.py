@@ -88,7 +88,7 @@ class Lab4():
         "Run the lab 1 simulation environment"
         # local variables
         if amount:
-            nbOfServersPerRegion = amount
+            nbOfServersPerRegion = int(amount)
         else:
             nbOfServersPerRegion = 4
         nbOfClientsPerRegion = 2

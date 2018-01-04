@@ -179,10 +179,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         print 'Vectors received: ', self.server.general.vectors_received
 
         # Number of results to be received and received
-        if self.server.profile.my_profile == 'Byzantine':
-            no_results_to_receive = len(self.server.vessels) - 1
-        else: 
-            no_results_to_receive = len(self.server.vessels)
+        no_results_to_receive = len(self.server.vessels) - 1
         no_results_received = len(self.server.general.result_vector)
         print '#results_received, #results_to_receive', no_results_received, no_results_to_receive
 

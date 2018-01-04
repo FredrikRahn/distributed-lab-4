@@ -44,3 +44,4 @@ class HtmlBuilder(object):
         for vote in result_vector:
             result += self.vote_result % (str(vote) + '\n')
         result += '\n' + 'Result: ' + str(result)
+        return result

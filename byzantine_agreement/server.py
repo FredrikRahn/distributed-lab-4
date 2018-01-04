@@ -480,10 +480,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         print 'Post_data: ', post_data
         vote_data = post_data['payload'][0]
         print 'vote_data: ', vote_data
-        vote_data = ast.literal_eval(vote_data)
-        print 'parsed vote_data: ', vote_data
-        node_id = vote_data[0]
-        vote_vector = vote_data[1]
+        node_id = vote_data['node_id']
+        vote_vector = vote_data['vote']
         print 'Node_id, vote_vector', node_id, vote_vector
         
         

@@ -180,7 +180,10 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         # Number of results to be received and received
         no_results_received = len(self.server.general.result_vector)
-        no_results_to_receive = len(self.server.vessels)
+        if self.server.profile.my_profile == 'Byzantine':
+            no_results_to_receive = len(self.server.vessels) - 1
+        else: 
+            no_results_to_receive = len(self.server.vessels)
         print '#results_received, #results_to_receive', no_results_received, no_results_to_receive
 
         # If we havent received all results, show vote_vector on page
@@ -257,7 +260,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             no_votes_to_receieve = len(self.server.vessels) - 1
         else:
             no_votes_to_receieve = len(self.server.vessels)
-            
+
         # Check if we have received all the vote_vectors
         no_vectors_received = len(self.server.general.vectors_received)
         # Should receive vectors from all but themselves
@@ -340,8 +343,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             elif no_false > no_true: 
                 self.server.general.result_vector.append(False)
             else:
-                # No majority, set value to UNKNOWN
-                self.server.general.result_vector.append('UNKNOWN')
+                # No majority, set value to on_tie
+                self.server.general.result_vector.append(self.server.on_tie)
 
             # Reset counters for next index to compare
             no_true = 0

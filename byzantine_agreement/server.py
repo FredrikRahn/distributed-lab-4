@@ -48,10 +48,6 @@ class ByzantineServer(HTTPServer):
         self.profile = General()
         # Init #byzantine nodes to 0
         self.no_byzantine = 0
-        # Vectors received
-        self.vectors_received = []
-        # Init result to None
-        self.result = None
 
     def contact_vessel(self, vessel_ip, path, payload):
         '''
@@ -178,10 +174,14 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Instantiate builder class
         builder = HtmlBuilder()
 
+        # TODO: DEBUGGING REMOVE
+        print 'Number of round: ', self.server.no_round
+        print 'Vectors received: ', self.server.general.vectors_received
+
         # Number of results to be received and received
         no_results_received = len(self.server.general.result_vector)
         no_results_to_receive = len(self.server.vessels) - 1
-        print '#received, #to receive', no_results_received, no_results_to_receive
+        print '#results_received, #results_to_receive', no_results_received, no_results_to_receive
 
         # If we havent received all results, show vote_vector on page
         if no_results_received < no_results_to_receive:
@@ -189,9 +189,10 @@ class RequestHandler(BaseHTTPRequestHandler):
             votes_page = builder.build_votes_result(vote_vector)
         elif no_results_to_receive == no_results_received:
             # We have received all the results, now build them
-            result_vector = self.server.general.result_vector
-            result = self.server.result
-            votes_page = builder.build_result(result_vector, result)
+            if self.server.no_round == 3:
+                result_vector = self.server.general.result_vector
+                result = self.server.result
+                votes_page = builder.build_result(result_vector, result)
         self.wfile.write(votes_page)
 
     def do_POST(self):
@@ -294,9 +295,9 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Need nested loop to check all the values on same index in all the vectors
         for i in range(0, vector_length):
             for vector in range(0, no_vectors):
-                if self.server.vectors_received[vector][i]:
+                if self.server.general.vectors_received[vector][i]:
                     no_true += 1
-                elif not self.server.vectors_received[vector][i]:
+                elif not self.server.general.vectors_received[vector][i]:
                     no_false += 1
                 else:
                     raise ValueError, 'Value is not True or False in vectors_received'
@@ -450,11 +451,11 @@ class RequestHandler(BaseHTTPRequestHandler):
         print 'vote_vector: ', vote_vector
 
         # Save vote_vector in vectors_received
-        self.server.vectors_received.append(vote_vector)
+        self.server.general.vectors_received.append(vote_vector)
+        print 'Vote_vectors received: ', self.server.general.vectors_received
 
-        print 'Vote_vectors received: ', self.server.vectors_received
         # Check if we have received all the vote_vectors
-        no_vectors_received = len(self.server.vectors_received)
+        no_vectors_received = len(self.server.general.vectors_received)
         # Should receive vectors from all but themselves
         no_vectors_to_receieve = len(self.server.vessels) - 1
         

@@ -482,8 +482,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         print 'vote_data: ', vote_data
         vote_data = ast.literal_eval(vote_data)
         print 'parsed vote_data: ', vote_data
-        node_id = vote_data['node_id']
-        vote_vector = vote_data['vote']
+        node_id = vote_data[0]
+        vote_vector = vote_data[1]
         print 'Node_id, vote_vector', node_id, vote_vector
         
         

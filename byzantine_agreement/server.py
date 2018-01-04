@@ -478,13 +478,14 @@ class RequestHandler(BaseHTTPRequestHandler):
         
         post_data = self.parse_post_request()
         print 'Post_data: ', post_data
-        vote_data = post_data['payload'][0]
+        node_id = post_data['payload'][0][0]
+        vote_data = post_data['payload'][0][1]
         vote_vector = ast.literal_eval(vote_data)
         print 'vote_vector: ', vote_vector
         #print 'Sent from node: ', node_id
 
-        #index = int(node_id) - 1
-        #vote_vector[index] = ''
+        index = int(node_id) - 1
+        vote_vector[index] = ''
 
         # Save vote_vector in vectors_received
         self.server.general.vectors_received.append(vote_vector)

@@ -191,7 +191,9 @@ class RequestHandler(BaseHTTPRequestHandler):
             # We have received all the results, now build them
             if self.server.no_round == 3:
                 result_vector = self.server.general.result_vector
+                print 'Result vector: ', result_vector
                 result = self.server.result
+                print 'Result: ', result
                 votes_page = builder.build_result(result_vector, result)
         self.wfile.write(votes_page)
 
@@ -314,9 +316,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Amount received should be amount of vessels - 1
         no_vectors = len(self.server.vessels) - 1
         vector_length = len(self.server.general.vote_vector.values())
-
-        #TODO: DEBUG REMOF
-        print 'Do we enter compute_results ?'
         
         # Init counting vars
         no_true = 0
@@ -327,44 +326,32 @@ class RequestHandler(BaseHTTPRequestHandler):
             for vector in range(0, no_vectors):
                 if self.server.general.vectors_received[vector][i]:
                     no_true += 1
-                    print 'Incremented true counter to: ', no_true
                 elif not self.server.general.vectors_received[vector][i]:
                     no_false += 1
-                    print 'Incremented false counter to: ', no_false
                 else:
                     raise ValueError, 'Value is not True or False in vectors_received'
             # Save majority result to result_vector
             if no_true > no_false:
                 self.server.general.result_vector.append(True)
-                print 'Appended True to result_vector'
             elif no_false > no_true: 
                 self.server.general.result_vector.append(False)
-                print 'Appended False to result_vector'
             else:
                 # No majority, set value to UNKNOWN
                 self.server.general.result_vector.append('UNKNOWN')
-                print 'Appended UNKNOWN to result_vector'
 
             # Reset counters for next index to compare
             no_true = 0
             no_false = 0
-            print 'Reset the counters of dream 9th dragon in the imbicile of kIm joNG ung'
 
         # Now that result vector has been computed, count True/False values
         no_true = self.server.general.result_vector.count(True)
-        print 'Counted number of True in result vector: ', no_true
         no_false = self.server.general.result_vector.count(False)
-        print 'Counted number of False in result vector: ', no_false
-
         if no_true > no_false:
             self.server.result = True
-            print 'Set result to: ', self.server.result
         elif no_false > no_true:
             self.server.result = False
-            print 'Set result to: ', self.server.result
         elif no_false == no_true:
             self.server.result = 'UNKNOWN'
-            print 'Set result to: ', self.server.result
                 
 
     def handle_honest_vote(self, arg):

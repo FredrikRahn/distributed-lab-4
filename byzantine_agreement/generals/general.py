@@ -28,6 +28,12 @@ class General(object):
         # Init empty Result vector
         self.result_vector = []
 
+        # Vectors received
+        self.vectors_received = []
+
+        # Init result
+        self.result = None
+
     def add_to_vote_vector(self, node_id, vote):
         self.vote_vector[node_id] = vote
 

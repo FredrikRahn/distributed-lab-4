@@ -179,7 +179,10 @@ class RequestHandler(BaseHTTPRequestHandler):
         print 'Vectors received: ', self.server.general.vectors_received
 
         # Number of results to be received and received
-        no_results_to_receive = len(self.server.vessels) - 1
+        if self.server.profile.my_profile == 'Byzantine':
+            no_results_to_receive = len(self.server.vessels) - 1
+        else: 
+            no_results_to_receive = len(self.server.vessels)
         no_results_received = len(self.server.general.result_vector)
         print '#results_received, #results_to_receive', no_results_received, no_results_to_receive
 
@@ -254,8 +257,12 @@ class RequestHandler(BaseHTTPRequestHandler):
     def change_round(self):
         # Logic for changing round
         no_votes_received = len(self.server.general.vote_vector.values())
-        # Should receive votes from all but themselves
-        no_votes_to_receieve = len(self.server.vessels) - 1
+        # Should receive votes from all but themselves if we're byzantine
+        if self.server.profile.my_profile == 'Byzantine':
+            no_votes_to_receieve = len(self.server.vessels) - 1
+        else:
+            no_votes_to_receieve = len(self.server.vessels)
+
         # Check if we have received all the vote_vectors
         no_vectors_received = len(self.server.general.vectors_received)
         # Should receive vectors from all but themselves
@@ -326,12 +333,10 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Need nested loop to check all the values on same index in all the vectors
         for i in range(0, vector_length):
             for vector in range(0, no_vectors):
-                if self.server.general.vectors_received[vector][i]:
+                if self.server.general.vectors_received[vector][i] is True:
                     no_true += 1
-                elif not self.server.general.vectors_received[vector][i]:
+                elif self.server.general.vectors_received[vector][i] is False:
                     no_false += 1
-                else:
-                    raise ValueError, 'Value is not True or False in vectors_received'
             # Save majority result to result_vector
             if no_true > no_false:
                 self.server.general.result_vector.append(True)
@@ -382,6 +387,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             vessel_id = self.server.vessel_id
             payload = models.vote_data(vessel_id, vote)
+
+            # Insert empty string on spot <vessel_id> so nodes correctly compare only received votes 
+            self.server.general.add_to_vote_vector(vessel_id, '')
             
             # Set http header to OK
             self.set_http_headers(200)

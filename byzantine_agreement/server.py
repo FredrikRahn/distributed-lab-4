@@ -98,7 +98,6 @@ class ByzantineServer(HTTPServer):
                         Value:String, 	Value corresponding to key
         @return:
         '''
-        # TODO: Add retry if fail
 
         for vessel in self.vessels:
             if vessel != ("10.1.0.%s" % self.vessel_id):
@@ -141,7 +140,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         '''
         Handles incoming GET requests and routes them accordingly
         '''
-        print "Receiving a GET on path %s" % self.path
         path = extract_ep(self.path)
         if path[0] == '':
             self.get_index()
@@ -165,8 +163,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def get_result(self):
         """
-        docstring here
-            :param self: temp
+        Posts the revieced votes or the total result if all votes have been recieved
         """
         # We set the response status code to 200 (OK)
         self.set_http_headers(200)
@@ -174,9 +171,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         # Instantiate builder class
         builder = HtmlBuilder()
 
-        # TODO: DEBUGGING REMOVE
-        print 'Number of round: ', self.server.no_round
-        print 'Vectors received: ', self.server.general.vectors_received
 
         # Number of results to be received and received
         if self.server.profile.my_profile == 'Byzantine':
@@ -184,7 +178,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         else: 
             no_results_to_receive = len(self.server.vessels)
         no_results_received = len(self.server.general.result_vector)
-        print '#results_received, #results_to_receive', no_results_received, no_results_to_receive
 
         # If we havent received all results, show vote_vector on page
         if no_results_received < no_results_to_receive:
@@ -195,9 +188,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             # We have received all the results, now build them
             if self.server.no_round == 3:
                 result_vector = self.server.general.result_vector
-                print 'Result vector: ', result_vector
                 result = self.server.general.result
-                print 'Result: ', result
                 votes_page = builder.build_result(result_vector, result)
                 self.wfile.write(votes_page)
 
@@ -206,7 +197,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         '''
         Handles incoming POST requests and routes them accordingly
         '''
-        print "Receiving a POST on %s" % self.path
         path = extract_ep(self.path)
         if path[0] == 'vote':
             if path[1] == 'attack':
@@ -225,8 +215,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def vote_attack(self):
         """
-        TODO: Implement
-            :param self: temp
+        Calls the byzantine agreement function with the argument 'Attack'
         """
         # Init byzantine agreement
         arg = 'Attack'
@@ -236,8 +225,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def vote_retreat(self):
         """
-        TODO: Implement
-            :param self: temp
+        Calls the byzantine agreement function with the argument 'Retreat'
         """
         # Init byzantine agreement
         arg = 'Retreat'
@@ -246,8 +234,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def vote_byzantine(self):
         """
-        TODO: Implement
-            :param self: temp
+        Calls the byzantine agreement function with the argument 'Byzantine'
         """
         # Init byzantine agreement
         arg = 'Byzantine'
@@ -255,6 +242,9 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.byzantine_agreement(arg)
     
     def change_round(self):
+        '''
+        Function to increase the round depending on how many honest and byzantine voters there are
+        '''
         # Logic for changing round
         no_votes_received = len(self.server.general.vote_vector.values())
         # Should receive votes from all but themselves if we're byzantine
@@ -319,6 +309,9 @@ class RequestHandler(BaseHTTPRequestHandler):
             raise ValueError, 'Unknown round'
     
     def compute_results(self):
+        '''
+        Calculates the result from the recieved voting vectors using the byzantine algorithm.
+        '''
         # Check for majority of each element in all the voting vectors received
         # Amount received should be amount of vessels
         # Append vote_vector to vote_vectors received
@@ -370,13 +363,13 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def handle_honest_vote(self, arg):
         '''
-        TODO: Fix pydoc
+        Handles the honest nodes. This is used if the 'Frue' or 'False'
+        option is used. (Attack or retreat in the GUI)
         '''
         # If no profile has been chosen yet set profile to honest
         if self.server.profile.my_profile == 'General':
             # Set profile to Honest
             self.server.profile = Honest()
-            print 'Profile set to Honest'
 
         elif self.server.profile.my_profile == 'Byzantine':
             # Profile is set to Byzantine which can only vote through Byzantine button
@@ -409,11 +402,11 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def handle_byzantine_vote(self):
         '''
-        TODO: Fix pydoc
+        Handles the byzantine voting nodes. This is used if the Byzantine
+        option is selected.
         '''
         if self.server.profile.my_profile == 'General':
             # Set profile to Byzantine
-            print 'Profile set to Byzantine and appended ip to node_ids'
             self.server.profile = Byzantine()
             self.server.no_byzantine += 1
             Byzantine.node_ids.append("10.1.0.%s" % self.server.vessel_id)
@@ -432,10 +425,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             if no_round == 1:
                 # Wait until all votes has been received from all nodes
                 while len(self.server.general.vote_vector.keys()) != (len(self.server.vessels) - self.server.no_byzantine):
-                    #TODO: Fix so this doesnt block so it can still receive new votes
-                    # Print once every 3 seconds to prevent spam
                     time.sleep(3)
-                    print 'Waiting for all votes to be received'
 
                 # Setup model
                 data = models.byzantine_vote_input(no_round, no_nodes, no_loyal, on_tie)
@@ -452,8 +442,6 @@ class RequestHandler(BaseHTTPRequestHandler):
                 # Propagate payload
                 byzantine_payload = self.server.profile.vote(data)
 
-                #TODO: DEBUGGING PLS REMOF
-                print 'Byzantine payload : ', byzantine_payload
                 for list in byzantine_payload:
                     list[self.server.vessel_id - 1] = ''
                 self.propagate_byzantine(byzantine_payload, '/propagate/vote_vector')
@@ -466,12 +454,10 @@ class RequestHandler(BaseHTTPRequestHandler):
     def propagate_vote(self):
         '''
         Handle requests on the /propagate/vote endpoint
-        TODO: Generalize func to handle all propagates
         '''
         post_data = self.parse_post_request()
         payload_data = post_data['payload'][0]
         parsed_data = ast.literal_eval(payload_data)
-        print 'parsed data: ', parsed_data
         vote = parsed_data['vote']
         node_id = parsed_data['node_id']
 
@@ -489,22 +475,20 @@ class RequestHandler(BaseHTTPRequestHandler):
         post_data = self.parse_post_request()
         payload_data = post_data['payload'][0]
         vote_vector = ast.literal_eval(payload_data)
-        print 'vote_vector: ', vote_vector
 
         # Save vote_vector in vectors_received
         self.server.general.vectors_received.append(vote_vector)
-        print 'Vote_vectors received: ', self.server.general.vectors_received
 
         # Do we need to change round ? 
         self.change_round()
     
     def propagate_byzantine(self, byzantine_payload, path=''):
         '''
-        TODO: Temp pydoc
+        propagates the byzantine payload on a specified path
+        If path is not set, standard path will be /propagate
         '''
         if not path:
             path = '/propagate'
-        print byzantine_payload
         ind = 0
 
         for vessel in self.server.vessels:
@@ -528,7 +512,8 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def propagate_payload(self, payload, path=''):
         '''
-        TODO: Temp pydoc
+        Propagates the regular payload on the specified path.
+        If path is not set, standard path will be /propagate
         '''
         if not path:
             path = '/propagate'
